@@ -4,4 +4,4 @@
 
 ## Projects
 
-* [protocol] - primitives for operating with Stellar's serialised data format (XDR).
+* [Protocol](protocol) - primitives for operating with Stellar's serialised data format (XDR).
