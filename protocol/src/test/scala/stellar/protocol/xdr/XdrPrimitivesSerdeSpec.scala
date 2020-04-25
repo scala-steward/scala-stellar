@@ -99,13 +99,28 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
       int.run(Seq(0, 0, 0)).value must throwA[EOFException]
     }
     "fail if there are insufficient bytes for a long" >> {
-      long.run(Seq(0, 0, 0, 0, 0, 0, 0)).value must throwA[EOFException]
+      long.run(Seq(0, 0, 0, 0, 0, 0, 0)).value must throwAn[EOFException]
     }
     "fail if there are insufficient bytes given the declared length" >> {
-      bytes.run(Seq(0, 0, 0, 4, 1, 1, 1)).value must throwA[EOFException]
+      bytes.run(Seq(0, 0, 0, 4, 1, 1, 1)).value must throwAn[EOFException]
     }
     "fail if the string has insufficient padding bytes" >> {
-      string.run(Seq(0, 0, 0, 1, 99, 0)).value must throwA[EOFException]
+      string.run(Seq(0, 0, 0, 1, 99, 0)).value must throwAn[EOFException]
+    }
+    "switch between first of multiple decoders" >> {
+      val encoded = Encode.int(0) ++ Encode.string("first")
+      switch(string.map(_.reverse), string, string.map(_.length.toString))
+        .run(encoded).value._2 mustEqual("tsrif")
+    }
+    "switch between other of multiple decoders" >> {
+      val encoded = Encode.int(2) ++ Encode.string("first")
+      switch(string.map(_.reverse), string, string.map(_.length.toString))
+        .run(encoded).value._2 mustEqual("5")
+    }
+    "fail to switch beyond the end of the decoder list" >> {
+      val encoded = Encode.int(99) ++ Encode.string("first")
+      switch(string.map(_.reverse), string, string.map(_.length.toString))
+        .run(encoded).value must throwAn[IllegalArgumentException]
     }
   }
 
