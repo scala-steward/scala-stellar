@@ -49,14 +49,9 @@ trait Decode extends LazyLogging {
 
   val string: State[Seq[Byte], String] = padded().map(_.toArray).map(new String(_, StandardCharsets.UTF_8))
 
-  def switch[T](zero: State[Seq[Byte], T], others: State[Seq[Byte], T]*): IndexedStateT[Eval, Seq[Byte], Seq[Byte], T] = int.flatMap {
-    case 0 => zero
-    case n =>  Try(others(n - 1)).getOrElse {
-      throw new IllegalArgumentException(s"No parser defined for discriminant $n")
-    }
-  }
+  def switch[T](zero: State[Seq[Byte], T], others: State[Seq[Byte], T]*): IndexedStateT[Eval, Seq[Byte], Seq[Byte], T] =
+    switchInt(zero, others: _*).map(_._1)
 
-  // TODO (jem) - All switches should use this instead and Discriminators should be held in the parent (switcher not switchee).
   def switchInt[T](zero: State[Seq[Byte], T], others: State[Seq[Byte], T]*): State[Seq[Byte], (T, Int)] = int.flatMap {
     case 0 => zero.map(_ -> 0)
     case n => Try(others(n - 1).map(_ -> n)).getOrElse {

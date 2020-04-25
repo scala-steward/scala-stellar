@@ -2,11 +2,14 @@ package stellar.protocol.xdr
 
 import java.io.EOFException
 import java.nio.charset.Charset
+import java.time.Instant
 
-import cats.data.State
+import cats.data.{NonEmptyList, State}
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
+
+import scala.util.Random
 
 class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
 
@@ -35,10 +38,16 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
       result must beTrue
     }
 
-    "work for opaque bytes" >> prop { bs: Seq[Byte] =>
+    "work for opaque bytes" >> prop { bs: Array[Byte] =>
       val (remainder, result) = bytes.run(Encode.bytes(bs)).value
       remainder must beEmpty
-      result mustEqual bs
+      result mustEqual bs.toSeq
+    }
+
+    "work for opaque bytes with explicit length" >> prop { bs: Array[Byte] =>
+      val (remainder, result) = bytes(bs.length).run(Encode.bytes(bs.length, bs)).value
+      remainder must beEmpty
+      result mustEqual bs.toSeq
     }
 
     "work for strings" >> prop { s: String =>
@@ -67,16 +76,37 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
       result mustEqual s
     }
 
-    "work for a list of encodables" >> prop { xs: Seq[String] =>
+    "work for instants" >> prop { i: Instant =>
+      val (remainder, result) = instant.run(Encode.instant(i)).value
+      remainder must beEmpty
+      result mustEqual i
+    }
+
+    "work for a list of strings" >> prop { xs: Seq[String] =>
       val (remainder, result) = arr(string).run(Encode.arrString(xs)).value
       remainder must beEmpty
       result mustEqual xs
     }
 
+    "work for a list of encodables" >> prop { xs: Seq[CompositeThing] =>
+      val (remainder, result) = arr(CompositeThing.decode).run(Encode.arr(xs)).value
+      remainder must beEmpty
+      result mustEqual xs
+    }.set(minTestsOk = 5)
+
     "work for a composite of encodables" >> prop { c: CompositeThing =>
       val (remainder, result) = CompositeThing.decode.run(c.encode).value
       remainder must beEmpty
       result mustEqual c
+    }
+
+    "work for ignoring tail things" >> prop { (a: CompositeThing, b: CompositeThing) =>
+      val encoded = a.encode ++ b.encode
+      val (remainder, result) = CompositeThing.decode
+        .flatMap(drop(CompositeThing.decode))
+        .run(encoded).value
+      remainder must beEmpty
+      result mustEqual a
     }
   }
 
@@ -122,6 +152,22 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
       switch(string.map(_.reverse), string, string.map(_.length.toString))
         .run(encoded).value must throwAn[IllegalArgumentException]
     }
+
+    "widen types correctly" >> {
+      trait Foo
+      case class Bar(i: Int) extends Foo with Encodable {
+        override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.int(i)
+      }
+      case class Baz(s: String) extends Foo with Encodable {
+        override def encode: LazyList[Byte] = Encode.int(1) ++ Encode.string(s)
+      }
+
+      val decodeBar: State[Seq[Byte], Bar] = int.map(Bar)
+      val decodeBaz: State[Seq[Byte], Baz] = string.map(Baz)
+      // without `widen`, this would fail to compile with type mismatch
+      val decode: State[Seq[Byte], Foo] = switch(widen(decodeBar), widen(decodeBaz))
+      decode.run(Bar(99).encode).value._2 mustEqual Bar(99)
+    }
   }
 
   implicit private val arbCompositeThing: Arbitrary[CompositeThing] = Arbitrary(genCompositeThing)
@@ -145,5 +191,5 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
     } yield CompositeThing(b, s, bs, next)
   }
 
-
+  implicit private val arbInstant: Arbitrary[Instant] = Arbitrary(Gen.posNum[Long].map(Instant.ofEpochSecond))
 }
