@@ -3,17 +3,21 @@ name: Build
 on: [push]
 
 jobs:
-  build-protocol:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+
     - name: Run tests
-      run: sbt coverage protocol/test protocol/coverageReport
-    - uses: codecov/codecov-action@v1
+      run: sbt coverage test coverageReport
+
+    - name: Coverage Report - Protocol
+      uses: codecov/codecov-action@v1
       with:
         file: ./protocol/target/scala-2.13/scoverage-report/scoverage.xml
         name: stellar-protocol
