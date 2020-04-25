@@ -16,9 +16,6 @@ jobs:
     - name: Run tests
       run: sbt coverage test coverageReport
 
-    - name: Coverage Report - Protocol
+    - name: Coverage Report
       uses: codecov/codecov-action@v1
-      with:
-        file: ./protocol/target/scala-2.13/scoverage-report/scoverage.xml
-        name: stellar-protocol
 
