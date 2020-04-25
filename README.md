@@ -1,4 +1,4 @@
-# Scala + Stellar
+# Stellar for Scala
 
 ![Build](https://github.com/Synesso/scala-stellar/workflows/Build/badge.svg?branch=master)
 

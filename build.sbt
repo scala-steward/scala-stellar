@@ -6,13 +6,18 @@ homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar-sdk"
 val cats = "org.typelevel" %% "cats-core" % "2.1.1"
 val logging = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-  "ch.qos.logback" % "logback-classic" % "1.2.3")
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
+)
 val specs2 = List(
     "org.specs2" %% "specs2-core" % "4.9.3" % "test",
-    "org.specs2" %% "specs2-scalacheck" % "4.9.3" % "test")
+    "org.specs2" %% "specs2-scalacheck" % "4.9.3" % "test",
+)
 
 
-
+def coverage(min: Int) = List(
+  coverageMinimum := min,
+  coverageFailOnMinimum := true,
+)
 
 
 
@@ -24,6 +29,7 @@ lazy val protocol = project
   .in(file("protocol"))
   .settings(
     libraryDependencies ++= cats :: logging ::: specs2,
+    coverage(70)
   )
 
 /*

@@ -1,2 +1,2 @@
-# Scala + Stellar Protocol
+# Stellar for Scala / Protocol
 
