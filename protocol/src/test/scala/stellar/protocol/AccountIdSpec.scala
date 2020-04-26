@@ -7,6 +7,7 @@ import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
 class AccountIdSpec extends Specification with ScalaCheck {
+  import AccountIds._
 
   "account id" should {
     "encode and decode" >> prop { accountId: AccountId =>
@@ -19,8 +20,10 @@ class AccountIdSpec extends Specification with ScalaCheck {
       AccountId(accountId.encodeToString) mustEqual accountId
     }
   }
+}
 
-  implicit val arbPublicKey: Arbitrary[AccountId] = Arbitrary(Gen.oneOf(Seq(() =>
+object AccountIds {
+  implicit val arbAccountId: Arbitrary[AccountId] = Arbitrary(Gen.oneOf(Seq(() =>
     AccountId(new ByteString(new KeyPairGenerator().generateKeyPair().getPublic.asInstanceOf[EdDSAPublicKey].getAbyte))))
-  .map(_.apply()))
+    .map(_.apply()))
 }

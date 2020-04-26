@@ -6,8 +6,6 @@ import org.apache.commons.codec.binary.Base32
 import stellar.protocol.Key.codec
 import stellar.protocol.xdr.{Decode, Encodable, Encode}
 
-import scala.util.{Failure, Success, Try}
-
 /**
  * A Key (also known as a StrKey, or Stellar Key) is a typed, encoded byte array.
  */
@@ -62,7 +60,22 @@ object AccountId extends Decode {
     bs <- bytes(32)
   } yield AccountId(new ByteString(bs.toArray))
 
-  def apply(accountId: String): AccountId =
-    AccountId(Key.decodeFromChars(accountId.toCharArray.toIndexedSeq))
+  def apply(accountId: String): AccountId = {
+    assert(accountId.startsWith("G"))
+    AccountId(Key.decodeFromString(accountId))
+  }
+}
 
+/**
+ * The private dual of the account id. Seeds are not encodable, because they are never transmitted.
+ */
+case class Seed(hash: ByteString) extends Key {
+  val kind: Byte = (18 << 3).toByte // S
+}
+
+object Seed {
+  def apply(secret: String): Seed = {
+    assert(secret.startsWith("S"))
+    Seed(Key.decodeFromString(secret))
+  }
 }
