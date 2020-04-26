@@ -13,7 +13,7 @@ lazy val protocol = project
       "commons-codec" % "commons-codec" % "1.14",
       "org.typelevel" %% "cats-core" % "2.1.1",
       "net.i2p.crypto" % "eddsa" % "0.3.0",
-      "com.squareup.okio" % "okio" % "2.5.0"
+      "com.squareup.okio" % "okio" % "2.6.0"
     ) ::: logging ::: specs2,
     coverage(99)
   )
