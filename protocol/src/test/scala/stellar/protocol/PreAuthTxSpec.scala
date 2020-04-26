@@ -22,7 +22,7 @@ class PreAuthTxSpec extends Specification with ScalaCheck {
 }
 
 object PreAuthTxs {
-  implicit val arbAccountId: Arbitrary[PreAuthTx] = Arbitrary(
+  implicit val arbPreAuthTx: Arbitrary[PreAuthTx] = Arbitrary(
     Gen.containerOfN[Array, Byte](32, Arbitrary.arbByte.arbitrary)
       .map(bs => PreAuthTx(new ByteString(bs)))
   )

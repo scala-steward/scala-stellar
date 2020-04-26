@@ -1,6 +1,9 @@
 package stellar.protocol
 
+import java.security.MessageDigest
+
 import cats.data.State
+import net.i2p.crypto.eddsa.EdDSAEngine
 import okio.ByteString
 import org.apache.commons.codec.binary.Base32
 import stellar.protocol.AccountId.{bytes, int}
@@ -35,14 +38,6 @@ object Key {
     assert((checkA, checkB) == (sumA, sumB),
       f"Checksum does not match. Provided: 0x$sumA%04X0x$sumB%04X. Actual: 0x$checkA%04X0x$checkB%04X")
     new ByteString(data)
-/*
-    key.head match {
-      case 'G' => AccountId(new ByteString(data))
-//      case 'S' => Seed(data.toIndexedSeq)
-//      case 'T' => PreAuthTx(data.toIndexedSeq)
-//      case 'X' => SHA256Hash(data.toIndexedSeq)
-    }
-*/
   }
 
 }

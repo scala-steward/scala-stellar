@@ -33,6 +33,7 @@ object Encode {
     bs.to(LazyList)
   }
 
+  def bytes(bs: ByteString): LazyList[Byte] = bytes(bs.toByteArray)
   def bytes(bs: Array[Byte]): LazyList[Byte] = bytes(bs.toIndexedSeq)
   def bytes(bs: Seq[Byte]): LazyList[Byte] = int(bs.length) ++ bs
 
