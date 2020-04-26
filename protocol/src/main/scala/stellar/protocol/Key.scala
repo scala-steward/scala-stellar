@@ -1,9 +1,6 @@
 package stellar.protocol
 
-import java.security.MessageDigest
-
 import cats.data.State
-import net.i2p.crypto.eddsa.EdDSAEngine
 import okio.ByteString
 import org.apache.commons.codec.binary.Base32
 import stellar.protocol.AccountId.{bytes, int}
@@ -48,6 +45,7 @@ object Key {
 case class AccountId(hash: ByteString) extends Key with Encodable {
   val kind: Byte = (6 << 3).toByte // G
   override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
+  override def toString: String = s"AccountId($encodeToString)"
 }
 
 object AccountId extends Decode {

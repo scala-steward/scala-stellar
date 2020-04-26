@@ -23,7 +23,8 @@ class AccountIdSpec extends Specification with ScalaCheck {
 }
 
 object AccountIds {
-  implicit val arbAccountId: Arbitrary[AccountId] = Arbitrary(Gen.oneOf(Seq(() =>
+  val genAccountId: Gen[AccountId] = Gen.oneOf(Seq(() =>
     AccountId(new ByteString(new KeyPairGenerator().generateKeyPair().getPublic.asInstanceOf[EdDSAPublicKey].getAbyte))))
-    .map(_.apply()))
+    .map(_.apply())
+  implicit val arbAccountId: Arbitrary[AccountId] = Arbitrary(genAccountId)
 }

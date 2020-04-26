@@ -9,7 +9,7 @@ case class Signature(data: ByteString, hint: ByteString) extends Encodable {
 }
 
 object Signature extends Decode {
-  def decode: State[Seq[Byte], Signature] = for {
+  val decode: State[Seq[Byte], Signature] = for {
     hint <- bytes(4).map(_.toArray).map(new ByteString(_))
     data <- bytes.map(_.toArray).map(new ByteString(_))
   } yield Signature(data, hint)
