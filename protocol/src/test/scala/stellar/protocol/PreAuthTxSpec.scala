@@ -20,8 +20,8 @@ class PreAuthTxSpec extends Specification with ScalaCheck with XdrSerdeMatchers 
 }
 
 object PreAuthTxs {
-  implicit val arbPreAuthTx: Arbitrary[PreAuthTx] = Arbitrary(
+  val genPreAuthTx: Gen[PreAuthTx] =
     Gen.containerOfN[Array, Byte](32, Arbitrary.arbByte.arbitrary)
       .map(bs => PreAuthTx(new ByteString(bs)))
-  )
+  implicit val arbPreAuthTx: Arbitrary[PreAuthTx] = Arbitrary(genPreAuthTx)
 }

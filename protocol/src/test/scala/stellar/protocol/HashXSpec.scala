@@ -20,8 +20,7 @@ class HashXSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
 }
 
 object HashXs {
-  implicit val arbAccountId: Arbitrary[HashX] = Arbitrary(
-    Gen.containerOfN[Array, Byte](32, Arbitrary.arbByte.arbitrary)
-      .map(bs => HashX(new ByteString(bs)))
-  )
+  val genHashX: Gen[HashX] = Gen.containerOfN[Array, Byte](32, Arbitrary.arbByte.arbitrary)
+    .map(bs => HashX(new ByteString(bs)))
+  implicit val arbAccountId: Arbitrary[HashX] = Arbitrary(genHashX)
 }

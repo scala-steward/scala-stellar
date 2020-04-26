@@ -35,13 +35,26 @@ object Key {
       f"Checksum does not match. Provided: 0x$sumA%04X0x$sumB%04X. Actual: 0x$checkA%04X0x$checkB%04X")
     new ByteString(data)
   }
+}
 
+/**
+ * Only a subset of StrKeys can be signers. Seeds should not be the declared signer
+ * (as they are the private dual of the AccountId).
+ */
+sealed trait SignerKey extends Key with Encodable
+
+object SignerKey extends Decoder[SignerKey] {
+  override val decode: State[Seq[Byte], SignerKey] = switch(
+    byteString(32).map(AccountId(_)),
+    byteString(32).map(PreAuthTx(_)),
+    byteString(32).map(HashX(_))
+  )
 }
 
 /**
  * The public facing identifier of a stellar key pair. The string encoded form always starts with a G.
  */
-case class AccountId(hash: ByteString) extends Key with Encodable {
+case class AccountId(hash: ByteString) extends SignerKey {
   val kind: Byte = (6 << 3).toByte // G
   override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
   override def toString: String = s"AccountId($encodeToString)"
@@ -78,7 +91,7 @@ object Seed {
  * of this kind are automatically removed from the account when the transaction is accepted by the
  * network. See https://www.stellar.org/developers/guides/concepts/multi-sig.html#pre-authorized-transaction
  */
-case class PreAuthTx(hash: ByteString) extends Key with Encodable {
+case class PreAuthTx(hash: ByteString) extends SignerKey {
   val kind: Byte = (19 << 3).toByte // T
   def encode: LazyList[Byte] = Encode.int(1) ++ Encode.bytes(32, hash)
 }
@@ -99,7 +112,7 @@ object PreAuthTx extends Decoder[PreAuthTx] {
  * Arbitrary 256-byte values can be used as signatures on transactions. The hash of such value are
  * able to be used as signers. See https://www.stellar.org/developers/guides/concepts/multi-sig.html#hashx
  */
-case class HashX(hash: ByteString) extends Key with Encodable {
+case class HashX(hash: ByteString) extends SignerKey {
   val kind: Byte = (23 << 3).toByte // X
   def encode: LazyList[Byte] = Encode.int(2) ++ Encode.bytes(32, hash)
 }

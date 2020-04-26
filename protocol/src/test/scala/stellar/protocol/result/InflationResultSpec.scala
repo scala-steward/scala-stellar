@@ -20,11 +20,11 @@ object InflationResults {
     recipient <- AccountIds.genAccountId
     units <- Gen.posNum[Long]
   } yield InflationPayout(recipient, units)
-  val genInflationNotDue: Gen[InflationResult] = Gen.oneOf(Seq(InflationNotDue))
+  val genInflationNotDue: Gen[InflationResult] = Gen.const(InflationNotDue)
   val genInflationSuccess: Gen[InflationResult] = Gen.listOf(genInflationPayout).map(InflationSuccess)
   val genInflationResult: Gen[InflationResult] = Gen.frequency(
     1 -> genInflationNotDue,
-    39 -> genInflationSuccess
+    9 -> genInflationSuccess
   )
   implicit val arbInflationResult: Arbitrary[InflationResult] = Arbitrary(genInflationResult)
 }

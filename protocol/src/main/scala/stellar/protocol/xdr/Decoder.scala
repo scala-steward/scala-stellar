@@ -8,6 +8,7 @@ import java.time.Instant
 import cats.Eval
 import cats.data.{IndexedStateT, State}
 import com.typesafe.scalalogging.LazyLogging
+import okio.ByteString
 
 import scala.util.Try
 
@@ -37,6 +38,8 @@ trait Decoder[U] extends LazyLogging {
   def bytes(len: Int): State[Seq[Byte], Seq[Byte]] = State[Seq[Byte], Seq[Byte]] { bs =>
     decode(bs, len) { _.take(len) }
   }
+
+  def byteString(len: Int): State[Seq[Byte], ByteString] = bytes(len).map(bs => new ByteString(bs.toArray))
 
   val bytes: State[Seq[Byte], Seq[Byte]] = for {
     len <- int
