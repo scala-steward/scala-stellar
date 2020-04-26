@@ -4,6 +4,8 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 
+import okio.ByteString
+
 trait Encodable {
   def encode: LazyList[Byte]
 }
@@ -24,6 +26,7 @@ object Encode {
 
   def instant(i: Instant): LazyList[Byte] = long(i.getEpochSecond)
 
+  def bytes(len: Int, bs: ByteString): LazyList[Byte] = bytes(len, bs.toByteArray)
   def bytes(len: Int, bs: Array[Byte]): LazyList[Byte] = bytes(len, bs.toIndexedSeq)
   def bytes(len: Int, bs: Seq[Byte]): LazyList[Byte] = {
     require(bs.length == len)

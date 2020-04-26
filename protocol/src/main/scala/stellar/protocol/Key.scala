@@ -3,6 +3,7 @@ package stellar.protocol
 import cats.data.State
 import okio.ByteString
 import org.apache.commons.codec.binary.Base32
+import stellar.protocol.AccountId.{bytes, int}
 import stellar.protocol.Key.codec
 import stellar.protocol.xdr.{Decode, Encodable, Encode}
 
@@ -77,5 +78,27 @@ object Seed {
   def apply(secret: String): Seed = {
     assert(secret.startsWith("S"))
     Seed(Key.decodeFromString(secret))
+  }
+}
+
+/**
+ * Pre-authorized transactions keys are the hashes of yet to be transmitted transactions. Signers
+ * of this kind are automatically removed from the account when the transaction is accepted by the
+ * network. See https://www.stellar.org/developers/guides/concepts/multi-sig.html#pre-authorized-transaction
+ */
+case class PreAuthTx(hash: ByteString) extends Key with Encodable {
+  val kind: Byte = (19 << 3).toByte // T
+  def encode: LazyList[Byte] = Encode.int(1) ++ Encode.bytes(32, hash.toByteArray)
+}
+
+object PreAuthTx {
+  val decode: State[Seq[Byte], PreAuthTx] = for {
+    _ <- int
+    bs <- bytes(32)
+  } yield PreAuthTx(new ByteString(bs.toArray))
+
+  def apply(hash: String): PreAuthTx = {
+    assert(hash.startsWith("T"))
+    PreAuthTx(Key.decodeFromString(hash))
   }
 }
