@@ -66,7 +66,7 @@ trait Decoder[U] extends LazyLogging {
     case false => State.pure(None)
   }
 
-  def arr[T](parseT: State[Seq[Byte], T]): State[Seq[Byte], Seq[T]] = int.flatMap(seq(_, parseT))
+  def arr[T](parseT: State[Seq[Byte], T]): State[Seq[Byte], List[T]] = int.flatMap(list(_, parseT))
 
   // $COVERAGE-OFF$
   // For debugging XDR only.
@@ -76,8 +76,8 @@ trait Decoder[U] extends LazyLogging {
   }
   // $COVERAGE-ON$
 
-  def seq[T](qty: Int, parseT: State[Seq[Byte], T]): State[Seq[Byte], Seq[T]] = {
-    (0 until qty).foldLeft(State.pure[Seq[Byte], Seq[T]](Seq.empty[T])) { case (state, _) =>
+  def list[T](qty: Int, parseT: State[Seq[Byte], T]): State[Seq[Byte], List[T]] = {
+    (0 until qty).foldLeft(State.pure[Seq[Byte], List[T]](List.empty[T])) { case (state, _) =>
       for {
         ts <- state
         t <- parseT
