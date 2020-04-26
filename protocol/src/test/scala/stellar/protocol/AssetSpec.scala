@@ -19,10 +19,15 @@ object Assets {
 
   val genAsset: Gen[Asset] = Gen.chooseNum(0, 12).flatMap {
     case 0 => Gen.oneOf(Seq(Lumens))
-    case n => for {
-      code <- Gen.listOfN(n, Gen.alphaNumChar).map(_.mkString)
-      issuer <- genAccountId
-    } yield Token(code, issuer)
+    case n => genToken(n)
   }
+
+  val genToken: Gen[Token] = Gen.choose(1, 12).flatMap(genToken(_))
+
+  private def genToken(length: Int) = for {
+    code <- Gen.listOfN(length, Gen.alphaNumChar).map(_.mkString)
+    issuer <- genAccountId
+  } yield Token(code, issuer)
+
   implicit val arbAsset: Arbitrary[Asset] = Arbitrary(genAsset)
 }
