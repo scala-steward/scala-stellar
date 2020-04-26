@@ -17,7 +17,9 @@ class SeedSpec extends Specification with ScalaCheck {
 }
 
 object Seeds {
-  implicit val arbSeed: Arbitrary[Seed] = Arbitrary(Gen.oneOf(Seq(() =>
-    Seed(new ByteString(new KeyPairGenerator().generateKeyPair().getPrivate.asInstanceOf[EdDSAPrivateKey].getAbyte))))
-    .map(_.apply()))
+  private val genKeyPair = Gen.const(() => new KeyPairGenerator().generateKeyPair()).map(_.apply())
+  private val genPrivateKey = genKeyPair.map(_.getPrivate.asInstanceOf[EdDSAPrivateKey])
+
+  val genSeed: Gen[Seed] = genPrivateKey.map(_.getAbyte).map(new ByteString(_)).map(Seed(_))
+  implicit val arbSeed: Arbitrary[Seed] = Arbitrary(genSeed)
 }

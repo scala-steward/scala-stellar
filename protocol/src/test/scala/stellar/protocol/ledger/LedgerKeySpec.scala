@@ -19,7 +19,7 @@ object LedgerKeys {
   val genLedgerKey: Gen[LedgerKey] = for {
     accountId <- AccountIds.genAccountId
     key <- Gen.chooseNum(0, 3).flatMap {
-      case 0 => Gen.oneOf(Seq(AccountKey(accountId)))
+      case 0 => Gen.const(AccountKey(accountId))
       case 1 => Assets.genToken.map(TrustLineKey(accountId, _))
       case 2 => Gen.posNum[Long].map(OfferKey(accountId, _))
       case 3 => Gen.identifier.map(DataKey(accountId, _))
