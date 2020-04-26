@@ -4,14 +4,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class AssetSpec extends Specification with ScalaCheck {
+class AssetSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import Assets._
 
   "asset" should {
     "encode and decode" >> prop { asset: Asset =>
-      val (remainder, value) = Asset.decode.run(asset.encode).value
-      remainder must beEmpty
-      value mustEqual asset
+      asset must xdrDecodeAndEncode(Asset)
     }
   }
 }

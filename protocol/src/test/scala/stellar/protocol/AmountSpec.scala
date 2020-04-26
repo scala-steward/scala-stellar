@@ -4,14 +4,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class AmountSpec extends Specification with ScalaCheck {
+class AmountSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import Amounts._
 
   "amount" should {
     "encode and decode" >> prop { amount: Amount =>
-      val (remaining, value) = Amount.decode.run(amount.encode).value
-      remaining must beEmpty
-      value mustEqual amount
+      amount should xdrDecodeAndEncode(Amount)
     }
   }
 }

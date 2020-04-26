@@ -5,14 +5,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class PreAuthTxSpec extends Specification with ScalaCheck {
+class PreAuthTxSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import PreAuthTxs._
 
   "pre authorised transaction" should {
     "encode and decode" >> prop { preAuthTx: PreAuthTx =>
-      val (remaining, value) = PreAuthTx.decode.run(preAuthTx.encode).value
-      remaining must beEmpty
-      value mustEqual preAuthTx
+      preAuthTx must xdrDecodeAndEncode(PreAuthTx)
     }
 
     "encode to string" >> prop { preAuthTx: PreAuthTx =>

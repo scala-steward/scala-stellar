@@ -3,9 +3,8 @@ package stellar.protocol
 import cats.data.State
 import okio.ByteString
 import org.apache.commons.codec.binary.Base32
-import stellar.protocol.AccountId.{bytes, int}
 import stellar.protocol.Key.codec
-import stellar.protocol.xdr.{ByteArrays, Decode, Encodable, Encode}
+import stellar.protocol.xdr.{ByteArrays, Decoder, Encodable, Encode}
 
 /**
  * A Key (also known as a StrKey, or Stellar Key) is a typed, encoded byte array.
@@ -48,7 +47,7 @@ case class AccountId(hash: ByteString) extends Key with Encodable {
   override def toString: String = s"AccountId($encodeToString)"
 }
 
-object AccountId extends Decode {
+object AccountId extends Decoder[AccountId] {
   val decode: State[Seq[Byte], AccountId] = for {
     _ <- int
     bs <- bytes(32)
@@ -84,7 +83,7 @@ case class PreAuthTx(hash: ByteString) extends Key with Encodable {
   def encode: LazyList[Byte] = Encode.int(1) ++ Encode.bytes(32, hash)
 }
 
-object PreAuthTx {
+object PreAuthTx extends Decoder[PreAuthTx] {
   val decode: State[Seq[Byte], PreAuthTx] = for {
     _ <- int
     bs <- bytes(32)
@@ -105,7 +104,7 @@ case class HashX(hash: ByteString) extends Key with Encodable {
   def encode: LazyList[Byte] = Encode.int(2) ++ Encode.bytes(32, hash)
 }
 
-object HashX {
+object HashX extends Decoder[HashX] {
   val decode: State[Seq[Byte], HashX] = for {
     _ <- int
     bs <- bytes(32)

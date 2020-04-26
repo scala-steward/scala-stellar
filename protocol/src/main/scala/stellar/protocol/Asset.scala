@@ -3,7 +3,7 @@ package stellar.protocol
 import cats.data.State
 import stellar.protocol.xdr.ByteArrays.paddedByteArray
 import stellar.protocol.xdr.Encode.{bytes, int}
-import stellar.protocol.xdr.{ByteArrays, Decode, Encodable, Encode}
+import stellar.protocol.xdr.{ByteArrays, Decoder, Encodable, Encode}
 
 sealed trait Asset extends Encodable {
   val code: String
@@ -28,7 +28,7 @@ case class Token(code: String, issuer: AccountId) extends Asset {
     else int(2) ++ bytes(12, paddedByteArray(code, 12)) ++ issuer.encode
 }
 
-object Asset extends Decode {
+object Asset extends Decoder[Asset] {
   val decode :State[Seq[Byte], Asset] = switch(
     State.pure(Lumens),
     bytes(4)

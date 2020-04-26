@@ -6,14 +6,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class AccountIdSpec extends Specification with ScalaCheck {
+class AccountIdSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import AccountIds._
 
   "account id" should {
     "encode and decode" >> prop { accountId: AccountId =>
-      val (remaining, value) = AccountId.decode.run(accountId.encode).value
-      remaining must beEmpty
-      value mustEqual accountId
+      accountId must xdrDecodeAndEncode(AccountId)
     }
 
     "encode to string" >> prop { accountId: AccountId =>

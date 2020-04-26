@@ -5,14 +5,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-class HashXSpec extends Specification with ScalaCheck {
+class HashXSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import HashXs._
 
   "pre authorised transaction" should {
     "encode and decode" >> prop { hashX: HashX =>
-      val (remaining, value) = HashX.decode.run(hashX.encode).value
-      remaining must beEmpty
-      value mustEqual hashX
+      hashX must xdrDecodeAndEncode(HashX)
     }
 
     "encode to string" >> prop { hashX: HashX =>

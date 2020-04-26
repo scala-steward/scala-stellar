@@ -4,14 +4,12 @@ import java.io.EOFException
 import java.nio.charset.Charset
 import java.time.Instant
 
-import cats.data.{NonEmptyList, State}
+import cats.data.State
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-import scala.util.Random
-
-class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
+class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decoder[Int] {
 
   "round trip serialisation" should {
     "work for ints" >> prop { i: Int =>
@@ -182,8 +180,8 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
     override def encode: LazyList[Byte] = Encode.optBytes(bs) ++ Encode.bool(b) ++ Encode.opt(next) ++ Encode.string(s)
   }
 
-  object CompositeThing extends Decode {
-    def decode: State[Seq[Byte], CompositeThing] = for {
+  object CompositeThing extends Decoder[CompositeThing] {
+    val decode: State[Seq[Byte], CompositeThing] = for {
       bs <- opt(bytes)
       b <- bool
       next <- opt[CompositeThing](CompositeThing.decode)
@@ -192,4 +190,5 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decode {
   }
 
   implicit private val arbInstant: Arbitrary[Instant] = Arbitrary(Gen.posNum[Long].map(Instant.ofEpochSecond))
+  override val decode: State[Seq[Byte], Int] = int
 }

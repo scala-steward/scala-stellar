@@ -11,7 +11,9 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.Try
 
-trait Decode extends LazyLogging {
+trait Decoder[U] extends LazyLogging {
+
+  val decode: State[Seq[Byte], U]
 
   private def decode[T](bs: Seq[Byte], len: Int)(decoder: Seq[Byte] => T): (Seq[Byte], T) = {
     if (bs.length < len) throw new EOFException("Insufficient data remains to parse.")
