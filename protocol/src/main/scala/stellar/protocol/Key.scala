@@ -52,7 +52,7 @@ object Key {
  */
 case class AccountId(hash: ByteString) extends Key with Encodable {
   val kind: Byte = (6 << 3).toByte // G
-  override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash.toByteArray)
+  override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
 }
 
 object AccountId extends Decode {
@@ -88,7 +88,7 @@ object Seed {
  */
 case class PreAuthTx(hash: ByteString) extends Key with Encodable {
   val kind: Byte = (19 << 3).toByte // T
-  def encode: LazyList[Byte] = Encode.int(1) ++ Encode.bytes(32, hash.toByteArray)
+  def encode: LazyList[Byte] = Encode.int(1) ++ Encode.bytes(32, hash)
 }
 
 object PreAuthTx {
@@ -100,5 +100,26 @@ object PreAuthTx {
   def apply(hash: String): PreAuthTx = {
     assert(hash.startsWith("T"))
     PreAuthTx(Key.decodeFromString(hash))
+  }
+}
+
+/**
+ * Arbitrary 256-byte values can be used as signatures on transactions. The hash of such value are
+ * able to be used as signers. See https://www.stellar.org/developers/guides/concepts/multi-sig.html#hashx
+ */
+case class HashX(hash: ByteString) extends Key with Encodable {
+  val kind: Byte = (23 << 3).toByte // X
+  def encode: LazyList[Byte] = Encode.int(2) ++ Encode.bytes(32, hash)
+}
+
+object HashX {
+  val decode: State[Seq[Byte], HashX] = for {
+    _ <- int
+    bs <- bytes(32)
+  } yield HashX(new ByteString(bs.toArray))
+
+  def apply(hash: String): HashX = {
+    assert(hash.startsWith("X"))
+    HashX(Key.decodeFromString(hash))
   }
 }
