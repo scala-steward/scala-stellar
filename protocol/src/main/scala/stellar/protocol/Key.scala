@@ -5,7 +5,7 @@ import okio.ByteString
 import org.apache.commons.codec.binary.Base32
 import stellar.protocol.AccountId.{bytes, int}
 import stellar.protocol.Key.codec
-import stellar.protocol.xdr.{Decode, Encodable, Encode}
+import stellar.protocol.xdr.{ByteArrays, Decode, Encodable, Encode}
 
 /**
  * A Key (also known as a StrKey, or Stellar Key) is a typed, encoded byte array.

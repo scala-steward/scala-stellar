@@ -1,4 +1,4 @@
-package stellar.protocol
+package stellar.protocol.xdr
 
 import okio.ByteString
 
