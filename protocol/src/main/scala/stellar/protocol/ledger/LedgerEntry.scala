@@ -1,9 +1,9 @@
 package stellar.protocol.ledger
 
 import cats.data.State
-import stellar.protocol.xdr.Encode.{arr, int, long, opt, string}
+import stellar.protocol.xdr.Encode.{arr, bool, int, long, opt, string}
 import stellar.protocol.xdr.{Decoder, Encodable, Encode}
-import stellar.protocol.{AccountId, Asset, Signer, Token}
+import stellar.protocol.{AccountId, Amount, Asset, Price, Signer, Token}
 
 sealed trait LedgerEntryData extends Encodable
 
@@ -51,10 +51,10 @@ case class TrustLineEntry(account: AccountId, token: Token, balance: Long, limit
     int(1) ++
       account.encode ++
       token.encode ++
-      Encode.long(balance) ++
-      Encode.long(limit) ++
-      Encode.bool(issuerAuthorized) ++
-      Encode.opt(liabilities)
+      long(balance) ++
+      long(limit) ++
+      bool(issuerAuthorized) ++
+      opt(liabilities)
 
 }
 
@@ -69,11 +69,39 @@ object TrustLineEntry extends Decoder[TrustLineEntry] {
   } yield TrustLineEntry(account, asset, balance, limit, issuerAuthorized, liabilities)
 }
 
+case class OfferEntry(account: AccountId, offerId: Long, selling: Amount, buying: Asset, price: Price)
+  extends LedgerEntryData {
+
+  override def encode: LazyList[Byte] =
+    int(2) ++
+      account.encode ++
+      long(offerId) ++
+      selling.asset.encode ++
+      buying.encode ++
+      long(selling.units) ++
+      price.encode ++
+      long(0)
+
+}
+
+object OfferEntry extends Decoder[OfferEntry] {
+  val decode: State[Seq[Byte], OfferEntry] = for {
+    account <- AccountId.decode
+    offerId <- long
+    selling <- Asset.decode
+    buying <- Asset.decode
+    units <- long
+    price <- Price.decode
+    _ <- int // flags
+    _ <- int // ext
+  } yield OfferEntry(account, offerId, Amount(selling, units), buying, price)
+}
+
 object LedgerEntryData extends Decoder[LedgerEntryData] {
   override val decode: State[Seq[Byte], LedgerEntryData] = switch[LedgerEntryData](
       widen(AccountEntry.decode),
       widen(TrustLineEntry.decode),
-//      widen(OfferEntry.decode),
+      widen(OfferEntry.decode),
 //      widen(DataEntry.decode)
     )
 }
