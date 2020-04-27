@@ -38,7 +38,7 @@ object Key {
 }
 
 /**
- * Only a subset of StrKeys can be signers. Seeds should not be the declared signer
+ * Only a subset of Keys can be signers. Seeds should not be the declared signer
  * (as they are the private dual of the AccountId).
  */
 sealed trait SignerKey extends Key with Encodable
