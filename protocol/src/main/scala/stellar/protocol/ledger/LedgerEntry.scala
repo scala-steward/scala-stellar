@@ -1,7 +1,8 @@
 package stellar.protocol.ledger
 
 import cats.data.State
-import stellar.protocol.xdr.Encode.{arr, bool, int, long, opt, string}
+import okio.ByteString
+import stellar.protocol.xdr.Encode.{arr, bool, int, long, opt, padded, string}
 import stellar.protocol.xdr.{Decoder, Encodable, Encode}
 import stellar.protocol.{AccountId, Amount, Asset, Price, Signer, Token}
 
@@ -97,11 +98,30 @@ object OfferEntry extends Decoder[OfferEntry] {
   } yield OfferEntry(account, offerId, Amount(selling, units), buying, price)
 }
 
+case class DataEntry(account: AccountId, name: String, value: ByteString) extends LedgerEntryData {
+
+  override def encode: LazyList[Byte] =
+    int(3) ++
+      account.encode ++
+      string(name) ++
+      padded(value.toByteArray) ++
+      int(0)
+}
+
+object DataEntry extends Decoder[DataEntry] {
+  val decode: State[Seq[Byte], DataEntry] = for {
+    account <- AccountId.decode
+    name <- string
+    value <- padded()
+    _ <- int
+  } yield DataEntry(account, name, new ByteString(value.toArray))
+}
+
 object LedgerEntryData extends Decoder[LedgerEntryData] {
   override val decode: State[Seq[Byte], LedgerEntryData] = switch[LedgerEntryData](
       widen(AccountEntry.decode),
       widen(TrustLineEntry.decode),
       widen(OfferEntry.decode),
-//      widen(DataEntry.decode)
+      widen(DataEntry.decode)
     )
 }

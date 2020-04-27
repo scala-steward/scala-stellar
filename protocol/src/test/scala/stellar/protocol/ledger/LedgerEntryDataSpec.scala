@@ -1,5 +1,6 @@
 package stellar.protocol.ledger
 
+import okio.ByteString
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
@@ -47,10 +48,17 @@ object LedgerEntryDatas {
     price <- Prices.genPrice
   } yield OfferEntry(account, offerId, selling, buying, price)
 
+  val genDataEntry: Gen[DataEntry] = for {
+    account <- AccountIds.genAccountId
+    name <- Gen.identifier
+    value <- Gen.identifier.map(_.getBytes("UTF-8")).map(new ByteString(_))
+  } yield DataEntry(account, name, value)
+
   val genLedgerEntryData: Gen[LedgerEntryData] = Gen.oneOf(
     genAccountEntry,
     genTrustLineEntry,
     genOfferEntry,
+    genDataEntry,
   )
   implicit val arbLedgerEntryData: Arbitrary[LedgerEntryData] = Arbitrary(genLedgerEntryData)
 }
