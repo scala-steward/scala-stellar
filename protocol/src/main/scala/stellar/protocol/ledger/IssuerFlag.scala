@@ -26,7 +26,7 @@ case object AuthorizationImmutableFlag extends IssuerFlag {
 object IssuerFlagSet extends Decoder[Set[IssuerFlag]] {
   val all: Set[IssuerFlag] = Set(AuthorizationRequiredFlag, AuthorizationRevocableFlag, AuthorizationImmutableFlag)
 
-  def apply(i: Int): Option[IssuerFlag] = all.find(_.i == i)
+  // def apply(i: Int): Option[IssuerFlag] = all.find(_.i == i)
 
   def from(i: Int): Set[IssuerFlag] = all.filter { f => (i & f.i) == f.i }
 

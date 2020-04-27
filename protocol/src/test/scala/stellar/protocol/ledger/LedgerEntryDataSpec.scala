@@ -3,8 +3,7 @@ package stellar.protocol.ledger
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import stellar.protocol.AccountIds.genAccountId
-import stellar.protocol.{Signers, XdrSerdeMatchers}
+import stellar.protocol.{AccountIds, Assets, Signers, XdrSerdeMatchers}
 
 class LedgerEntryDataSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import LedgerEntryDatas._
@@ -18,11 +17,11 @@ class LedgerEntryDataSpec extends Specification with ScalaCheck with XdrSerdeMat
 
 object LedgerEntryDatas {
   val genAccountEntry: Gen[AccountEntry] = for {
-    account <- genAccountId
+    account <- AccountIds.genAccountId
     balance <- Gen.posNum[Long]
     seqNum <- Gen.posNum[Long]
     numSubEntries <- Gen.posNum[Int]
-    inflationDestination <- Gen.option(genAccountId)
+    inflationDestination <- Gen.option(AccountIds.genAccountId)
     flags <- IssuerFlags.genIssuerFlags
     homeDomain <- Gen.option(Gen.identifier)
     thresholds <- LedgerThresholds.genLedgerThreshold
@@ -31,6 +30,15 @@ object LedgerEntryDatas {
   } yield AccountEntry(account, balance, seqNum, numSubEntries, inflationDestination, flags, homeDomain,
     thresholds, signers, liabilities)
 
-  val genLedgerEntryData: Gen[LedgerEntryData] = Gen.oneOf(genAccountEntry, genAccountEntry)
+  val genTrustLineEntry: Gen[TrustLineEntry] = for {
+    account <- AccountIds.genAccountId
+    asset <- Assets.genToken
+    balance <- Gen.posNum[Long]
+    limit <- Gen.posNum[Long]
+    issuerAuthorized <- Gen.oneOf(true, false)
+    liabilities <- Gen.option(LiabilitySums.genLiabilitySum)
+  } yield TrustLineEntry(account, asset, balance, limit, issuerAuthorized, liabilities)
+
+  val genLedgerEntryData: Gen[LedgerEntryData] = Gen.oneOf(genAccountEntry, genTrustLineEntry)
   implicit val arbLedgerEntryData: Arbitrary[LedgerEntryData] = Arbitrary(genLedgerEntryData)
 }
