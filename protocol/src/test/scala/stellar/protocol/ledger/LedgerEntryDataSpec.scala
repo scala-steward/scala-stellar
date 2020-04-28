@@ -10,8 +10,8 @@ class LedgerEntryDataSpec extends Specification with ScalaCheck with XdrSerdeMat
   import LedgerEntryDatas._
 
   "ledger entry data" should {
-    "serialise and deserialise" >> prop { data: LedgerEntryData =>
-      data must xdrDecodeAndEncode(LedgerEntryData)
+    "serialise and deserialise" >> prop { data: (LedgerEntryData, Int) =>
+      data._1 must xdrDecodeAndEncode(LedgerEntryData)
     }
   }
 }
@@ -54,11 +54,10 @@ object LedgerEntryDatas {
     value <- Gen.identifier.map(_.getBytes("UTF-8")).map(new ByteString(_))
   } yield DataEntry(account, name, value)
 
-  val genLedgerEntryData: Gen[LedgerEntryData] = Gen.oneOf(
-    genAccountEntry,
-    genTrustLineEntry,
-    genOfferEntry,
-    genDataEntry,
-  )
-  implicit val arbLedgerEntryData: Arbitrary[LedgerEntryData] = Arbitrary(genLedgerEntryData)
+  val genLedgerEntryData: Gen[(LedgerEntryData, Int)] = for {
+    idx <- Gen.choose(0, 3)
+    data <- List(genAccountEntry, genTrustLineEntry, genOfferEntry, genDataEntry)(idx)
+  } yield data -> idx
+
+  implicit val arbLedgerEntryData: Arbitrary[(LedgerEntryData, Int)] = Arbitrary(genLedgerEntryData)
 }

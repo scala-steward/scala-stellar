@@ -4,23 +4,26 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 
+import com.typesafe.scalalogging.LazyLogging
 import okio.ByteString
 
 trait Encodable {
   def encode: LazyList[Byte]
 }
 
-object Encode {
+object Encode extends LazyLogging {
 
   def int(i: Int): LazyList[Byte] = {
     val buffer = ByteBuffer.allocate(4)
     buffer.putInt(i)
+    logger.trace("Encoding {} as {}", i, buffer.array())
     buffer.array().to(LazyList)
   }
 
   def long(l: Long): LazyList[Byte] = {
     val buffer = ByteBuffer.allocate(8)
     buffer.putLong(l)
+    logger.trace("Encoding {} as {}", l, buffer.array())
     buffer.array().to(LazyList)
   }
 
@@ -30,12 +33,16 @@ object Encode {
   def bytes(len: Int, bs: Array[Byte]): LazyList[Byte] = bytes(len, bs.toIndexedSeq)
   def bytes(len: Int, bs: Seq[Byte]): LazyList[Byte] = {
     require(bs.length == len)
+    logger.trace("Encoding {}", bs)
     bs.to(LazyList)
   }
 
   def bytes(bs: ByteString): LazyList[Byte] = bytes(bs.toByteArray)
   def bytes(bs: Array[Byte]): LazyList[Byte] = bytes(bs.toIndexedSeq)
-  def bytes(bs: Seq[Byte]): LazyList[Byte] = int(bs.length) ++ bs
+  def bytes(bs: Seq[Byte]): LazyList[Byte] = {
+    logger.trace("Encoding with length {}, {}", bs.length, bs)
+    int(bs.length) ++ bs
+  }
 
   def padded(bs: Array[Byte]): LazyList[Byte] = padded(bs.toIndexedSeq)
   def padded(bs: Seq[Byte]): LazyList[Byte] = {
