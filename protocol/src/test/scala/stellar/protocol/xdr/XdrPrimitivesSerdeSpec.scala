@@ -80,20 +80,20 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decoder[
       result mustEqual i
     }
 
-    "work for a list of strings" >> prop { xs: Seq[String] =>
+    "work for a list of strings" >> prop { xs: List[String] =>
       val (remainder, result) = arr(string).run(Encode.arrString(xs)).value
       remainder must beEmpty
       result mustEqual xs
     }
 
-    "work for a list of encodables" >> prop { xs: Seq[CompositeThing] =>
+    "work for a list of encodables" >> prop { xs: List[CompositeThing] =>
       val (remainder, result) = arr(CompositeThing.decode).run(Encode.arr(xs)).value
       remainder must beEmpty
       result mustEqual xs
     }.set(minTestsOk = 5)
 
     "work for a composite of encodables" >> prop { c: CompositeThing =>
-      val (remainder, result) = CompositeThing.decode.run(c.encode).value
+      val (remainder, result) = CompositeThing.decode.run(c.encodeDiscriminated).value
       remainder must beEmpty
       result mustEqual c
     }
@@ -172,11 +172,11 @@ class XdrPrimitivesSerdeSpec extends Specification with ScalaCheck with Decoder[
   private def genCompositeThing: Gen[CompositeThing] = for {
     b <- Gen.oneOf(true, false)
     s <- Gen.identifier
-    bs <- Gen.option(Gen.containerOf[Seq, Byte](Gen.choose(0x00, 0xff).map(_.toByte)))
+    bs <- Gen.option(Gen.containerOf[List, Byte](Gen.choose(0x00, 0xff).map(_.toByte)))
     ct <- Gen.option(genCompositeThing)
   } yield CompositeThing(b, s, bs, ct)
 
-  case class CompositeThing(b: Boolean, s: String, bs: Option[Seq[Byte]], next: Option[CompositeThing]) extends Encodable {
+  case class CompositeThing(b: Boolean, s: String, bs: Option[List[Byte]], next: Option[CompositeThing]) extends Encodable {
     override def encode: LazyList[Byte] = Encode.optBytes(bs) ++ Encode.bool(b) ++ Encode.opt(next) ++ Encode.string(s)
   }
 

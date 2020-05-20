@@ -35,13 +35,13 @@ trait Decoder[U] extends LazyLogging {
 
   val bool: State[Seq[Byte], Boolean] = int.map(_ == 1)
 
-  def bytes(len: Int): State[Seq[Byte], Seq[Byte]] = State[Seq[Byte], Seq[Byte]] { bs =>
-    decode(bs, len) { _.take(len) }
+  def bytes(len: Int): State[Seq[Byte], List[Byte]] = State[Seq[Byte], List[Byte]] { bs =>
+    decode(bs, len) { _.take(len).toList }
   }
 
   def byteString(len: Int): State[Seq[Byte], ByteString] = bytes(len).map(bs => new ByteString(bs.toArray))
 
-  val bytes: State[Seq[Byte], Seq[Byte]] = for {
+  val bytes: State[Seq[Byte], List[Byte]] = for {
     len <- int
     bs <- bytes(len)
   } yield bs

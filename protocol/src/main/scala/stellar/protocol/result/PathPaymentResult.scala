@@ -14,7 +14,7 @@ sealed abstract class PathPaymentResult(opResultCode: Int) extends OpResult {
  * PathPayment operation was successful.
  * @param claims the trades that were effected during this path payment.
  */
-case class PathPaymentSuccess(claims: Seq[OfferClaim],
+case class PathPaymentSuccess(claims: List[OfferClaim],
                               destination: AccountId,
                               paid: Amount) extends PathPaymentResult(0) {
 

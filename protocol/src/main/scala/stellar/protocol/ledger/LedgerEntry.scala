@@ -5,7 +5,7 @@ import stellar.protocol.xdr.Encode.int
 import stellar.protocol.xdr.{Decoder, Encodable}
 
 case class LedgerEntry(lastModifiedLedgerSeq: Int, data: LedgerEntryData, private val dataDisc: Int) extends Encodable {
-  override def encode: LazyList[Byte] = int(lastModifiedLedgerSeq) ++ data.encode
+  override def encode: LazyList[Byte] = int(lastModifiedLedgerSeq) ++ data.encodeDiscriminated
 }
 
 object LedgerEntry extends Decoder[LedgerEntry] {

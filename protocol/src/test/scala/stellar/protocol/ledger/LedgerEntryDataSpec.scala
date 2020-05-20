@@ -11,7 +11,7 @@ class LedgerEntryDataSpec extends Specification with ScalaCheck with XdrSerdeMat
 
   "ledger entry data" should {
     "serialise and deserialise" >> prop { data: (LedgerEntryData, Int) =>
-      data._1 must xdrDecodeAndEncode(LedgerEntryData)
+      data._1 must xdrDecodeAndEncodeDiscriminated(LedgerEntryData)
     }
   }
 }

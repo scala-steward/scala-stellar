@@ -2,19 +2,20 @@ package stellar.protocol.ledger
 
 import cats.data.State
 import okio.ByteString
-import stellar.protocol.xdr.Encode.{arr, bool, int, long, opt, padded, string}
-import stellar.protocol.xdr.{Decoder, Encodable, Encode}
-import stellar.protocol.{AccountId, Amount, Asset, Price, Signer, Token}
+import stellar.protocol.xdr.Encode._
+import stellar.protocol.xdr.{Decoder, Encodable}
+import stellar.protocol._
 
-sealed trait LedgerEntryData extends Encodable
+sealed abstract class LedgerEntryData(val discriminator: Int) extends Encodable {
+  override def encodeDiscriminated: LazyList[Byte] = int(discriminator) ++ encode
+}
 
 case class AccountEntry(account: AccountId, balance: Long, seqNum: Long, numSubEntries: Int,
                         inflationDestination: Option[AccountId], flags: Set[IssuerFlag],
-                        homeDomain: Option[String], thresholds: LedgerThreshold, signers: Seq[Signer],
-                        liabilities: Option[LiabilitySum]) extends LedgerEntryData {
+                        homeDomain: Option[String], thresholds: LedgerThreshold, signers: List[Signer],
+                        liabilities: Option[LiabilitySum]) extends LedgerEntryData(0) {
 
   override def encode: LazyList[Byte] =
-    int(0) ++
       account.encode ++
       long(balance) ++
       long(seqNum) ++
@@ -46,10 +47,9 @@ object AccountEntry extends Decoder[AccountEntry] {
 
 case class TrustLineEntry(account: AccountId, token: Token, balance: Long, limit: Long,
                           issuerAuthorized: Boolean, liabilities: Option[LiabilitySum])
-  extends LedgerEntryData {
+  extends LedgerEntryData(1) {
 
   override def encode: LazyList[Byte] =
-    int(1) ++
       account.encode ++
       token.encode ++
       long(balance) ++
@@ -71,10 +71,9 @@ object TrustLineEntry extends Decoder[TrustLineEntry] {
 }
 
 case class OfferEntry(account: AccountId, offerId: Long, selling: Amount, buying: Asset, price: Price)
-  extends LedgerEntryData {
+  extends LedgerEntryData(2) {
 
   override def encode: LazyList[Byte] =
-    int(2) ++
       account.encode ++
       long(offerId) ++
       selling.asset.encode ++
@@ -98,10 +97,9 @@ object OfferEntry extends Decoder[OfferEntry] {
   } yield OfferEntry(account, offerId, Amount(selling, units), buying, price)
 }
 
-case class DataEntry(account: AccountId, name: String, value: ByteString) extends LedgerEntryData {
+case class DataEntry(account: AccountId, name: String, value: ByteString) extends LedgerEntryData(3) {
 
   override def encode: LazyList[Byte] =
-    int(3) ++
       account.encode ++
       string(name) ++
       padded(value.toByteArray) ++

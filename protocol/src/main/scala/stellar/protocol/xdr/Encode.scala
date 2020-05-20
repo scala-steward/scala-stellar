@@ -9,6 +9,7 @@ import okio.ByteString
 
 trait Encodable {
   def encode: LazyList[Byte]
+  def encodeDiscriminated: LazyList[Byte] = encode
 }
 
 object Encode extends LazyLogging {
@@ -30,22 +31,22 @@ object Encode extends LazyLogging {
   def instant(i: Instant): LazyList[Byte] = long(i.getEpochSecond)
 
   def bytes(len: Int, bs: ByteString): LazyList[Byte] = bytes(len, bs.toByteArray)
-  def bytes(len: Int, bs: Array[Byte]): LazyList[Byte] = bytes(len, bs.toIndexedSeq)
-  def bytes(len: Int, bs: Seq[Byte]): LazyList[Byte] = {
+  def bytes(len: Int, bs: Array[Byte]): LazyList[Byte] = bytes(len, bs.toList)
+  def bytes(len: Int, bs: List[Byte]): LazyList[Byte] = {
     require(bs.length == len)
     logger.trace("Encoding {}", bs)
     bs.to(LazyList)
   }
 
   def bytes(bs: ByteString): LazyList[Byte] = bytes(bs.toByteArray)
-  def bytes(bs: Array[Byte]): LazyList[Byte] = bytes(bs.toIndexedSeq)
-  def bytes(bs: Seq[Byte]): LazyList[Byte] = {
+  def bytes(bs: Array[Byte]): LazyList[Byte] = bytes(bs.toList)
+  def bytes(bs: List[Byte]): LazyList[Byte] = {
     logger.trace("Encoding with length {}, {}", bs.length, bs)
     int(bs.length) ++ bs
   }
 
-  def padded(bs: Array[Byte]): LazyList[Byte] = padded(bs.toIndexedSeq)
-  def padded(bs: Seq[Byte]): LazyList[Byte] = {
+  def padded(bs: Array[Byte]): LazyList[Byte] = padded(bs.toList)
+  def padded(bs: List[Byte]): LazyList[Byte] = {
     val multipleOf: Int = 4
     val filler = Array.fill[Byte]((multipleOf - (bs.length % multipleOf)) % multipleOf)(0)
     bytes(bs) ++ filler
@@ -65,11 +66,11 @@ object Encode extends LazyLogging {
 
   def optString(o: Option[String]): LazyList[Byte] = optT(o, string)
 
-  def optBytes(o: Option[Seq[Byte]]): LazyList[Byte] = optT(o, bytes(_: Seq[Byte]))
+  def optBytes(o: Option[List[Byte]]): LazyList[Byte] = optT(o, bytes(_: List[Byte]))
 
-  def arr(xs: Seq[Encodable]): LazyList[Byte] = int(xs.size) ++ xs.flatMap(_.encode)
+  def arr(xs: List[Encodable]): LazyList[Byte] = int(xs.size) ++ xs.flatMap(_.encode)
 
-  def arrString(xs: Seq[String]): LazyList[Byte] = int(xs.size) ++ xs.flatMap(string)
+  def arrString(xs: List[String]): LazyList[Byte] = int(xs.size) ++ xs.flatMap(string)
 
   def bool(b: Boolean): LazyList[Byte] = if (b) int(1) else int(0)
 

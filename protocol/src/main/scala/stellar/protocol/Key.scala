@@ -20,7 +20,7 @@ sealed trait Key {
 object Key {
   val codec = new Base32()
 
-  def decodeFromString(key: String): ByteString = decodeFromChars(key.toIndexedSeq)
+  def decodeFromString(key: String): ByteString = decodeFromChars(key.toList)
   def decodeFromChars(key: Seq[Char]): ByteString = {
     assert(key.forall(_ <= 127), s"Illegal characters in provided StrKey")
 
