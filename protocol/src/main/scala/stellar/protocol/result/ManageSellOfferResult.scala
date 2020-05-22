@@ -20,18 +20,18 @@ object ManageSellOfferResult extends Decoder[ManageSellOfferResult] {
         widen(State.pure(ManageSellOfferDeleted(claims)))
       )
     } yield result
-    case -1 => State.pure(ManageOfferMalformed)
-    case -2 => State.pure(ManageOfferSellNoTrust)
-    case -3 => State.pure(ManageOfferBuyNoTrust)
-    case -4 => State.pure(ManageOfferSellNoAuth)
-    case -5 => State.pure(ManageOfferBuyNoAuth)
-    case -6 => State.pure(ManageOfferLineFull)
-    case -7 => State.pure(ManageOfferUnderfunded)
-    case -8 => State.pure(ManageOfferCrossSelf)
-    case -9 => State.pure(ManageOfferSellNoIssuer)
-    case -10 => State.pure(ManageOfferBuyNoIssuer)
-    case -11 => State.pure(UpdateOfferIdNotFound)
-    case -12 => State.pure(ManageOfferLowReserve)
+    case -1 => State.pure(ManageSellOfferMalformed)
+    case -2 => State.pure(ManageSellOfferSellNoTrust)
+    case -3 => State.pure(ManageSellOfferBuyNoTrust)
+    case -4 => State.pure(ManageSellOfferSellNoAuth)
+    case -5 => State.pure(ManageSellOfferBuyNoAuth)
+    case -6 => State.pure(ManageSellOfferLineFull)
+    case -7 => State.pure(ManageSellOfferUnderfunded)
+    case -8 => State.pure(ManageSellOfferCrossSelf)
+    case -9 => State.pure(ManageSellOfferSellNoIssuer)
+    case -10 => State.pure(ManageSellOfferBuyNoIssuer)
+    case -11 => State.pure(UpdateSellOfferIdNotFound)
+    case -12 => State.pure(ManageSellOfferLowReserve)
   }
 }
 
@@ -65,67 +65,67 @@ case class ManageSellOfferDeleted(claims: List[OfferClaim]) extends ManageSellOf
 }
 
 /**
- * ManageOffer operation failed because the request was malformed.
+ * ManageSellOffer operation failed because the request was malformed.
  * E.g. Either of the assets were invalid, the assets were the same as each other,
  * the amount was less than zero, or the price numerator or denominator were zero or less.
  */
-case object ManageOfferMalformed extends ManageSellOfferResult(-1)
+case object ManageSellOfferMalformed extends ManageSellOfferResult(-1)
 
 /**
- * ManageOffer operation failed because there was no trustline for what was being offered.
+ * ManageSellOffer operation failed because there was no trustline for what was being offered.
  * (This also implies the account was underfunded).
  */
-case object ManageOfferSellNoTrust extends ManageSellOfferResult(-2)
+case object ManageSellOfferSellNoTrust extends ManageSellOfferResult(-2)
 
 /**
- * ManageOffer operation failed because there was no trustline for what was being sought.
+ * ManageSellOffer operation failed because there was no trustline for what was being sought.
  */
-case object ManageOfferBuyNoTrust extends ManageSellOfferResult(-3)
+case object ManageSellOfferBuyNoTrust extends ManageSellOfferResult(-3)
 
 /**
- * ManageOffer operation failed because the account is not authorised to sell the offered asset.
+ * ManageSellOffer operation failed because the account is not authorised to sell the offered asset.
  */
-case object ManageOfferSellNoAuth extends ManageSellOfferResult(-4)
+case object ManageSellOfferSellNoAuth extends ManageSellOfferResult(-4)
 
 /**
- * ManageOffer operation failed because the account is not authorised to buy the sought asset.
+ * ManageSellOffer operation failed because the account is not authorised to buy the sought asset.
  */
-case object ManageOfferBuyNoAuth extends ManageSellOfferResult(-5)
+case object ManageSellOfferBuyNoAuth extends ManageSellOfferResult(-5)
 
 /**
- * ManageOffer operation failed because it would have put the account's balance over the limit for the sought asset.
+ * ManageSellOffer operation failed because it would have put the account's balance over the limit for the sought asset.
  */
-case object ManageOfferLineFull extends ManageSellOfferResult(-6)
+case object ManageSellOfferLineFull extends ManageSellOfferResult(-6)
 
 /**
- * ManageOffer operation failed because there was an insufficient balance of the asset being offered to meet the offer.
+ * ManageSellOffer operation failed because there was an insufficient balance of the asset being offered to meet the offer.
  */
-case object ManageOfferUnderfunded extends ManageSellOfferResult(-7)
+case object ManageSellOfferUnderfunded extends ManageSellOfferResult(-7)
 
 /**
- * ManageOffer operation failed because it would have matched with an offer from the same account.
+ * ManageSellOffer operation failed because it would have matched with an offer from the same account.
  */
-case object ManageOfferCrossSelf extends ManageSellOfferResult(-8)
+case object ManageSellOfferCrossSelf extends ManageSellOfferResult(-8)
 
 /**
- * ManageOffer operation failed because there is no issuer for the asset being offered.
+ * ManageSellOffer operation failed because there is no issuer for the asset being offered.
  */
-case object ManageOfferSellNoIssuer extends ManageSellOfferResult(-9)
+case object ManageSellOfferSellNoIssuer extends ManageSellOfferResult(-9)
 
 /**
- * ManageOffer operation failed because there is no issuer for the asset being sought.
+ * ManageSellOffer operation failed because there is no issuer for the asset being sought.
  */
-case object ManageOfferBuyNoIssuer extends ManageSellOfferResult(-10)
+case object ManageSellOfferBuyNoIssuer extends ManageSellOfferResult(-10)
 
 /**
- * ManageOffer operation failed because it was an update attempt, but an offer with the given id did not exist.
+ * ManageSellOffer operation failed because it was an update attempt, but an offer with the given id did not exist.
  */
-case object UpdateOfferIdNotFound extends ManageSellOfferResult(-11)
+case object UpdateSellOfferIdNotFound extends ManageSellOfferResult(-11)
 
 /**
- * ManageOffer operation failed because the cumulative amount of it & all current offers from the same account
+ * ManageSellOffer operation failed because the cumulative amount of it & all current offers from the same account
  * would exceed the account's available balance.
  */
-case object ManageOfferLowReserve extends ManageSellOfferResult(-12)
+case object ManageSellOfferLowReserve extends ManageSellOfferResult(-12)
 
 

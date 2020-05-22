@@ -9,7 +9,7 @@ import stellar.protocol.ledger.LedgerEntryDatas
 class ManageSellOfferResultSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
   import ManageSellOfferResults._
 
-  "create account result" should {
+  "manage sell offer result" should {
     "serialise and deserialise" >> prop { result: ManageSellOfferResult =>
       result must xdrDecodeAndEncode(ManageSellOfferResult)
     }
@@ -35,18 +35,18 @@ object ManageSellOfferResults {
     genManageSellOfferCreated,
     genManageSellOfferUpdated,
     genManageSellOfferDeleted,
-    Gen.const(ManageOfferMalformed),
-    Gen.const(ManageOfferBuyNoTrust),
-    Gen.const(ManageOfferSellNoTrust),
-    Gen.const(ManageOfferBuyNoAuth),
-    Gen.const(ManageOfferSellNoAuth),
-    Gen.const(ManageOfferBuyNoIssuer),
-    Gen.const(ManageOfferSellNoIssuer),
-    Gen.const(ManageOfferLineFull),
-    Gen.const(ManageOfferUnderfunded),
-    Gen.const(ManageOfferCrossSelf),
-    Gen.const(ManageOfferLowReserve),
-    Gen.const(UpdateOfferIdNotFound)
+    Gen.const(ManageSellOfferMalformed),
+    Gen.const(ManageSellOfferBuyNoTrust),
+    Gen.const(ManageSellOfferSellNoTrust),
+    Gen.const(ManageSellOfferBuyNoAuth),
+    Gen.const(ManageSellOfferSellNoAuth),
+    Gen.const(ManageSellOfferBuyNoIssuer),
+    Gen.const(ManageSellOfferSellNoIssuer),
+    Gen.const(ManageSellOfferLineFull),
+    Gen.const(ManageSellOfferUnderfunded),
+    Gen.const(ManageSellOfferCrossSelf),
+    Gen.const(ManageSellOfferLowReserve),
+    Gen.const(UpdateSellOfferIdNotFound)
   )
   implicit val arbSellManageOfferResult: Arbitrary[ManageSellOfferResult] =
     Arbitrary(genSellManageOfferResult)
