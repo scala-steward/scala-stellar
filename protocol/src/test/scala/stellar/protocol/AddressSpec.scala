@@ -11,6 +11,10 @@ class AddressSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
     "serialise and deserialise" >> prop { address: Address =>
       address must xdrDecodeAndEncode(Address)
     }
+
+    "encode and decode to the same" >> prop { address: Address =>
+      Address(address.accountId.encodeToString) mustEqual address
+    }
   }
 }
 
@@ -19,8 +23,8 @@ object Addresses {
 
   def genAddress: Gen[Address] = for {
     accountId <- genAccountId
-    subAccountId <- Gen.option(Gen.posNum[Long])
-  } yield Address(accountId, subAccountId)
+    // subAccountId <- Gen.option(Gen.posNum[Long]) // TODO - SEP23
+  } yield Address(accountId)
 
   implicit val arbAddress: Arbitrary[Address] = Arbitrary(genAddress)
 }

@@ -74,7 +74,7 @@ case class AccountId(hash: ByteString) extends SignerKey {
   val kind: Byte = (6 << 3).toByte // G
   def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
 
-/*
+/* TODO - SEP23
   val kind: Byte = subAccountId match {
     case None => (6 << 3).toByte // G
     case _ => (12 << 3).toByte   // M
@@ -108,7 +108,7 @@ object AccountId extends Decoder[AccountId] {
 
   def apply(accountId: String): AccountId = AccountId(Key.decodeFromString(accountId))
 
-  /*
+  /* TODO - SEP23
   val decode: State[Seq[Byte], AccountId] = int.flatMap {
     case 0x000 => byteString(32).map(AccountId(_))
     case 0x100 => for {
