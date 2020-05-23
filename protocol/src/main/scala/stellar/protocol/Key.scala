@@ -35,20 +35,6 @@ object Key {
       f"Checksum does not match. Provided: 0x$sumA%04X0x$sumB%04X. Actual: 0x$checkA%04X0x$checkB%04X")
     new ByteString(data)
   }
-
-/*
-  def decodeMuxed(key: List[Char]): (ByteString, Long) = {
-    assert(key.forall(_ <= 127), s"Illegal characters in provided key")
-    val decoded: Array[Byte] = codec.decode(key.map(_.toByte).toArray)
-
-    val (data, Array(sumA, sumB)) = decoded.tail.splitAt(decoded.length - 3)
-    val Array(checkA, checkB) = ByteArrays.checksum(decoded.take(decoded.length - 2)).toByteArray
-    assert((checkA, checkB) == (sumA, sumB),
-      f"Checksum does not match. Provided: 0x$sumA%04X,0x$sumB%04X. Actual: 0x$checkA%04X,0x$checkB%04X")
-    val (accountId, hash) = data.splitAt(8)
-    (new ByteString(hash), ByteBuffer.wrap(accountId).getLong())
-  }
-*/
 }
 
 /**
@@ -74,29 +60,6 @@ case class AccountId(hash: ByteString) extends SignerKey {
   val kind: Byte = (6 << 3).toByte // G
   def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
 
-/* TODO - SEP23
-  val kind: Byte = subAccountId match {
-    case None => (6 << 3).toByte // G
-    case _ => (12 << 3).toByte   // M
-  }
-  def encode: LazyList[Byte] = subAccountId match {
-    case None => Encode.int(0x000) ++ Encode.bytes(32, hash)
-    case Some(id) => Encode.int(0x100) ++ Encode.long(id) ++ Encode.bytes(32, hash)
-  }
-
-  override def encodeToString: String = subAccountId match {
-    case None => super.encodeToString
-    case Some(id) =>
-      codec.encode(kind +: Encode.long(id).toArray ++: hash.toByteArray ++: checksum.toByteArray)
-        .map(_.toChar).mkString
-  }
-
-  override def checksum: ByteString = subAccountId match {
-    case None => super.checksum
-    case Some(id) => ByteArrays.checksum(kind +: Encode.long(id).toArray ++: hash.toByteArray)
-  }
-*/
-
   override def toString: String = s"AccountId($encodeToString)"
 }
 
@@ -108,25 +71,6 @@ object AccountId extends Decoder[AccountId] {
 
   def apply(accountId: String): AccountId = AccountId(Key.decodeFromString(accountId))
 
-  /* TODO - SEP23
-  val decode: State[Seq[Byte], AccountId] = int.flatMap {
-    case 0x000 => byteString(32).map(AccountId(_))
-    case 0x100 => for {
-      subAccountId <- long
-      bs <- byteString(32)
-    } yield AccountId(bs, Some(subAccountId))
-  }
-
-  def apply(accountId: String): AccountId = {
-    accountId.headOption match {
-      case Some('G') => AccountId(Key.decode(accountId.toList))
-      case Some('M') =>
-        val (hash, subAccountId) = Key.decodeMuxed(accountId.toList)
-        AccountId(hash, Some(subAccountId))
-      case _ => throw new AssertionError(s"AccountIds must start with 'G' or 'M'. Was $accountId")
-    }
-  }
-*/
 }
 
 /**
