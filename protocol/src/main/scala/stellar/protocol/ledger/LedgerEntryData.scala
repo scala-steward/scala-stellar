@@ -2,9 +2,9 @@ package stellar.protocol.ledger
 
 import cats.data.State
 import okio.ByteString
+import stellar.protocol._
 import stellar.protocol.xdr.Encode._
 import stellar.protocol.xdr.{Decoder, Encodable}
-import stellar.protocol._
 
 sealed abstract class LedgerEntryData(val discriminator: Int) extends Encodable {
   override def encodeDiscriminated: LazyList[Byte] = int(discriminator) ++ encode
@@ -14,7 +14,6 @@ case class AccountEntry(account: AccountId, balance: Long, seqNum: Long, numSubE
                         inflationDestination: Option[AccountId], flags: Set[IssuerFlag],
                         homeDomain: Option[String], thresholds: LedgerThreshold, signers: List[Signer],
                         liabilities: Option[LiabilitySum]) extends LedgerEntryData(0) {
-
   override def encode: LazyList[Byte] =
       account.encode ++
       long(balance) ++

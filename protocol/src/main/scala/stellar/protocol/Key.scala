@@ -13,7 +13,7 @@ sealed trait Key {
   val kind: Byte
   val hash: ByteString
   def checksum: ByteString = ByteArrays.checksum(kind +: hash.toByteArray)
-  def encodeToString: String = codec.encode(kind +: (hash.toByteArray ++: checksum.toByteArray))
+  def encodeToString: String = codec.encode(kind +: hash.toByteArray ++: checksum.toByteArray)
     .map(_.toChar).mkString
 }
 
@@ -52,24 +52,25 @@ object SignerKey extends Decoder[SignerKey] {
 }
 
 /**
- * The public facing identifier of a stellar key pair. The string encoded form always starts with a G.
+ * The public facing identifier of a stellar key pair. The string encoded form starts with
+ * a G. If the account includes a subAccountId then the encoded form may start with an M and
+ * include that sub account id.
  */
 case class AccountId(hash: ByteString) extends SignerKey {
   val kind: Byte = (6 << 3).toByte // G
-  override def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
+  def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
+
   override def toString: String = s"AccountId($encodeToString)"
 }
 
 object AccountId extends Decoder[AccountId] {
   val decode: State[Seq[Byte], AccountId] = for {
     _ <- int
-    bs <- bytes(32)
-  } yield AccountId(new ByteString(bs.toArray))
+    bs <- byteString(32)
+  } yield AccountId(bs)
 
-  def apply(accountId: String): AccountId = {
-    assert(accountId.startsWith("G"))
-    AccountId(Key.decodeFromString(accountId))
-  }
+  def apply(accountId: String): AccountId = AccountId(Key.decodeFromString(accountId))
+
 }
 
 /**
