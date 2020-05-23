@@ -1,7 +1,8 @@
 package stellar.protocol
 
 import cats.data.State
-import stellar.protocol.xdr.{Decoder, Encodable, Encode}
+import stellar.protocol.xdr.Encode.{bytes, int, long}
+import stellar.protocol.xdr.{Decoder, Encodable}
 
 /**
  * An Address is how accounts are identified.
@@ -11,17 +12,17 @@ import stellar.protocol.xdr.{Decoder, Encodable, Encode}
 case class Address(accountId: AccountId, subAccountId: Option[Long] = None) extends Encodable {
 
   override def encode: LazyList[Byte] = subAccountId match {
-    case Some(id) => Encode.int(0x100) ++ Encode.long(id) ++ accountId.encode
-    case None => Encode.int(0x000) ++ accountId.encode
+    case Some(id) => int(0x100) ++ long(id) ++ bytes(32, accountId.hash)
+    case None => int(0x000) ++ bytes(32, accountId.hash)
   }
 }
 
 object Address extends Decoder[Address] {
   override val decode: State[Seq[Byte], Address] = int.flatMap {
-    case 0x000 => AccountId.decode.map(Address(_))
+    case 0x000 => byteString(32).map(bs => Address(AccountId(bs)))
     case 0x100 => for {
       subId <- long
-      accountId <- AccountId.decode
+      accountId <- byteString(32).map(AccountId(_))
     } yield Address(accountId, Some(subId))
   }
 

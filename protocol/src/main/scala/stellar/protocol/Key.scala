@@ -73,7 +73,6 @@ object SignerKey extends Decoder[SignerKey] {
 case class AccountId(hash: ByteString) extends SignerKey {
   val kind: Byte = (6 << 3).toByte // G
   def encode: LazyList[Byte] = Encode.int(0) ++ Encode.bytes(32, hash)
-  // TODO - check if the zero belongs in Address only.
 
 /*
   val kind: Byte = subAccountId match {
