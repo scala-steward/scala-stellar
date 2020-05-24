@@ -29,18 +29,6 @@ lazy val horizon = project
     coverage(99)
   )
 
-/*
-lazy val core = project
-  .in(file("core"))
-
-lazy val testing = project
-  .in(file("testing"))
-
-lazy val integration = project
-  .in(file("integration"))
-  .dependsOn(core)
-*/
-
 val logging = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
@@ -49,6 +37,7 @@ val specs2 = List(
   "org.specs2" %% "specs2-core" % "4.9.4" % "test",
   "org.specs2" %% "specs2-scalacheck" % "4.9.4" % "test",
 )
+
 def coverage(min: Int) = List(
   coverageMinimum := min,
   coverageFailOnMinimum := true,
