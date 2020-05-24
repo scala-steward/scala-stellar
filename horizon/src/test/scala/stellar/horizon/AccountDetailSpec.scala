@@ -1,5 +1,8 @@
 package stellar.horizon
 
+import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME
+import java.time.{Instant, ZoneId}
+
 import org.json4s.native.JsonMethods.parse
 import org.json4s.native.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -7,13 +10,12 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
-
 class AccountDetailSpec extends Specification with ScalaCheck {
   import AccountDetails._
 
   "account detail" should {
     "deserialise from json" >> prop { accountDetail: AccountDetail =>
-      parse(asJson(accountDetail)).extract[AccountDetail] mustEqual accountDetail
+      parse(asJsonDoc(accountDetail)).extract[AccountDetail] mustEqual accountDetail
     }
   }
 
@@ -26,18 +28,20 @@ object AccountDetails {
     accountId <- genAccountId
     sequence <- Gen.posNum[Long]
     lastModifiedLedger <- Gen.posNum[Long]
+    lastModifiedTime <- Gen.posNum[Long].map(Instant.ofEpochMilli)
+      .map(_.atZone(ZoneId.of("Z")).withNano(0))
     subEntryCount <- Gen.posNum[Int]
     thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map{ case List(l, m, h) => Thresholds(l, m, h) }
     authRequired <- Gen.oneOf(true, false)
     authRevocable <- Gen.oneOf(true, false)
-  } yield AccountDetail(accountId, sequence, lastModifiedLedger, subEntryCount, thresholds,
-    authRequired, authRevocable)
+  } yield AccountDetail(accountId, sequence, lastModifiedLedger, lastModifiedTime, subEntryCount,
+    thresholds, authRequired, authRevocable)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
   implicit val formats: Formats = Serialization.formats(NoTypeHints) + AccountDetailReader
 
-  def asJson(detail: AccountDetail): String = {
+  def asJsonDoc(detail: AccountDetail): String = {
     val id = detail.id.encodeToString
     s"""
       |{
@@ -79,7 +83,7 @@ object AccountDetails {
       |  "sequence": "${detail.sequence}",
       |  "subentry_count": ${detail.subEntryCount},
       |  "last_modified_ledger": ${detail.lastModifiedLedger},
-      |  "last_modified_time": "2020-05-24T04:34:21Z",
+      |  "last_modified_time": "${detail.lastModifiedTime.format(ISO_ZONED_DATE_TIME)}",
       |  "thresholds": {
       |    "low_threshold": ${detail.thresholds.low},
       |    "med_threshold": ${detail.thresholds.med},

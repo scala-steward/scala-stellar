@@ -1,5 +1,7 @@
 package stellar.horizon
 
+import java.time.ZonedDateTime
+
 import org.json4s.JsonAST.JObject
 import org.json4s.{DefaultFormats, Formats}
 import stellar.horizon.json.JsReader
@@ -8,13 +10,14 @@ import stellar.protocol.AccountId
 case class AccountDetail(id: AccountId,
                          sequence: Long,
                          lastModifiedLedger: Long,
+                         lastModifiedTime: ZonedDateTime,
                          subEntryCount: Int,
                          thresholds: Thresholds,
                          authRequired: Boolean,
                          authRevocable: Boolean,
-//                         balances: List[Balance],
-//                         signers: List[Signer],
-//                         data: Map[String, Array[Byte]]
+                         //                         balances: List[Balance],
+                         //                         signers: List[Signer],
+                         //                         data: Map[String, Array[Byte]]
                         )
 
 object AccountDetail {
@@ -26,6 +29,7 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
   val id = AccountId((o \ "id").extract[String])
   val seq = (o \ "sequence").extract[String].toLong
   val lastModifiedLedger = (o \ "last_modified_ledger").extract[Long]
+  val lastModifiedTime = ZonedDateTime.parse((o \ "last_modified_time").extract[String])
   val subEntryCount = (o \ "subentry_count").extract[Int]
   val thresholds = (o \ "thresholds").extract[Thresholds]
   val authRequired = (o \ "flags" \ "auth_required").extract[Boolean]
@@ -71,7 +75,8 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
 //  val JObject(dataFields) = o \ "data"
 //  val data = dataFields.map{ case (k, v) => k -> ByteArrays.base64(v.extract[String]) }.toMap
 
-  AccountDetail(id, seq, lastModifiedLedger, subEntryCount, thresholds, authRequired, authRevocable
+  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds,
+    authRequired, authRevocable
     /*, balances, signers, data*/)
 
 })
