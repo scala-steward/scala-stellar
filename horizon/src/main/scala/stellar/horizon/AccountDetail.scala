@@ -13,8 +13,7 @@ case class AccountDetail(id: AccountId,
                          lastModifiedTime: ZonedDateTime,
                          subEntryCount: Int,
                          thresholds: Thresholds,
-                         authRequired: Boolean,
-                         authRevocable: Boolean,
+                         authFlags: AuthFlags
                          //                         balances: List[Balance],
                          //                         signers: List[Signer],
                          //                         data: Map[String, Array[Byte]]
@@ -24,7 +23,7 @@ object AccountDetail {
 }
 
 object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
-  implicit val formats: Formats = DefaultFormats + ThresholdsReader
+  implicit val formats: Formats = DefaultFormats + ThresholdsReader + AuthFlagsReader
 
   val id = AccountId((o \ "id").extract[String])
   val seq = (o \ "sequence").extract[String].toLong
@@ -32,8 +31,7 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
   val lastModifiedTime = ZonedDateTime.parse((o \ "last_modified_time").extract[String])
   val subEntryCount = (o \ "subentry_count").extract[Int]
   val thresholds = (o \ "thresholds").extract[Thresholds]
-  val authRequired = (o \ "flags" \ "auth_required").extract[Boolean]
-  val authRevocable = (o \ "flags" \ "auth_revocable").extract[Boolean]
+  val flags = (o \ "flags").extract[AuthFlags]
 /*
   val JArray(jsBalances) = o \ "balances"
   val balances = jsBalances.map {
@@ -75,8 +73,8 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
 //  val JObject(dataFields) = o \ "data"
 //  val data = dataFields.map{ case (k, v) => k -> ByteArrays.base64(v.extract[String]) }.toMap
 
-  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds,
-    authRequired, authRevocable
+  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds, flags
+
     /*, balances, signers, data*/)
 
 })

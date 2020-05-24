@@ -31,11 +31,10 @@ object AccountDetails {
     lastModifiedTime <- Gen.posNum[Long].map(Instant.ofEpochMilli)
       .map(_.atZone(ZoneId.of("Z")).withNano(0))
     subEntryCount <- Gen.posNum[Int]
-    thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map{ case List(l, m, h) => Thresholds(l, m, h) }
-    authRequired <- Gen.oneOf(true, false)
-    authRevocable <- Gen.oneOf(true, false)
+    thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map { case List(l, m, h) => Thresholds(l, m, h) }
+    authFlags <- Gen.listOfN(3, Gen.oneOf(false, true)).map { case List(a, b, c) => AuthFlags(a, b, c) }
   } yield AccountDetail(accountId, sequence, lastModifiedLedger, lastModifiedTime, subEntryCount,
-    thresholds, authRequired, authRevocable)
+    thresholds, authFlags)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
@@ -90,9 +89,9 @@ object AccountDetails {
       |    "high_threshold": ${detail.thresholds.high}
       |  },
       |  "flags": {
-      |    "auth_required": ${detail.authRequired},
-      |    "auth_revocable": ${detail.authRevocable},
-      |    "auth_immutable": false
+      |    "auth_required": ${detail.authFlags.required},
+      |    "auth_revocable": ${detail.authFlags.revocable},
+      |    "auth_immutable": ${detail.authFlags.immutable}
       |  },
       |  "balances": [
       |    {
