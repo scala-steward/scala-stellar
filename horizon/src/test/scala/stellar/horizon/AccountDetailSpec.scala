@@ -1,8 +1,8 @@
 package stellar.horizon
 
-import org.json4s.{Formats, NoTypeHints}
-import org.json4s.native.{JsonMethods, Serialization}
 import org.json4s.native.JsonMethods.parse
+import org.json4s.native.Serialization
+import org.json4s.{Formats, NoTypeHints}
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
@@ -27,9 +27,11 @@ object AccountDetails {
     sequence <- Gen.posNum[Long]
     lastModifiedLedger <- Gen.posNum[Long]
     subEntryCount <- Gen.posNum[Int]
+    thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map{ case List(l, m, h) => Thresholds(l, m, h) }
     authRequired <- Gen.oneOf(true, false)
     authRevocable <- Gen.oneOf(true, false)
-  } yield AccountDetail(accountId, sequence, lastModifiedLedger, subEntryCount, authRequired, authRevocable)
+  } yield AccountDetail(accountId, sequence, lastModifiedLedger, subEntryCount, thresholds,
+    authRequired, authRevocable)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
@@ -79,9 +81,9 @@ object AccountDetails {
       |  "last_modified_ledger": ${detail.lastModifiedLedger},
       |  "last_modified_time": "2020-05-24T04:34:21Z",
       |  "thresholds": {
-      |    "low_threshold": 0,
-      |    "med_threshold": 0,
-      |    "high_threshold": 0
+      |    "low_threshold": ${detail.thresholds.low},
+      |    "med_threshold": ${detail.thresholds.med},
+      |    "high_threshold": ${detail.thresholds.high}
       |  },
       |  "flags": {
       |    "auth_required": ${detail.authRequired},

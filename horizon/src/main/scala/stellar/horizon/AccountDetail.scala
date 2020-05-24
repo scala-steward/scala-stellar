@@ -9,7 +9,7 @@ case class AccountDetail(id: AccountId,
                          sequence: Long,
                          lastModifiedLedger: Long,
                          subEntryCount: Int,
-//                         thresholds: Thresholds,
+                         thresholds: Thresholds,
                          authRequired: Boolean,
                          authRevocable: Boolean,
 //                         balances: List[Balance],
@@ -21,14 +21,13 @@ object AccountDetail {
 }
 
 object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
-  implicit val formats: Formats = DefaultFormats
+  implicit val formats: Formats = DefaultFormats + ThresholdsReader
+
   val id = AccountId((o \ "id").extract[String])
   val seq = (o \ "sequence").extract[String].toLong
   val lastModifiedLedger = (o \ "last_modified_ledger").extract[Long]
   val subEntryCount = (o \ "subentry_count").extract[Int]
-//  val lowThreshold = (o \ "thresholds" \ "low_threshold").extract[Int]
-//  val mediumThreshold = (o \ "thresholds" \ "med_threshold").extract[Int]
-//  val highThreshold = (o \ "thresholds" \ "high_threshold").extract[Int]
+  val thresholds = (o \ "thresholds").extract[Thresholds]
   val authRequired = (o \ "flags" \ "auth_required").extract[Boolean]
   val authRevocable = (o \ "flags" \ "auth_revocable").extract[Boolean]
 /*
@@ -72,7 +71,7 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
 //  val JObject(dataFields) = o \ "data"
 //  val data = dataFields.map{ case (k, v) => k -> ByteArrays.base64(v.extract[String]) }.toMap
 
-  AccountDetail(id, seq, lastModifiedLedger, subEntryCount, /*Thresholds(lowThreshold, mediumThreshold, highThreshold),*/
-    authRequired, authRevocable/*, balances, signers, data*/)
+  AccountDetail(id, seq, lastModifiedLedger, subEntryCount, thresholds, authRequired, authRevocable
+    /*, balances, signers, data*/)
 
 })
