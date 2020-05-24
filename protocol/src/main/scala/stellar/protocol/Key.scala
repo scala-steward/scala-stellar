@@ -70,7 +70,6 @@ object AccountId extends Decoder[AccountId] {
   } yield AccountId(bs)
 
   def apply(accountId: String): AccountId = AccountId(Key.decodeFromString(accountId))
-
 }
 
 /**

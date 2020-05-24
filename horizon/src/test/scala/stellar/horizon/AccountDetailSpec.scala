@@ -1,0 +1,111 @@
+package stellar.horizon
+
+import org.json4s.{Formats, NoTypeHints}
+import org.json4s.native.{JsonMethods, Serialization}
+import org.json4s.native.JsonMethods.parse
+import org.scalacheck.{Arbitrary, Gen}
+import org.specs2.ScalaCheck
+import org.specs2.mutable.Specification
+
+
+class AccountDetailSpec extends Specification with ScalaCheck {
+  import AccountDetails._
+
+  "account detail" should {
+    "deserialise from json" >> prop { accountDetail: AccountDetail =>
+      parse(asJson(accountDetail)).extract[AccountDetail] mustEqual accountDetail
+    }
+  }
+
+}
+
+object AccountDetails {
+  import stellar.protocol.AccountIds._
+
+  val genAccountDetail: Gen[AccountDetail] = for {
+    accountId <- genAccountId
+    sequence <- Gen.posNum[Long]
+    lastModifiedLedger <- Gen.posNum[Long]
+    subEntryCount <- Gen.posNum[Int]
+    authRequired <- Gen.oneOf(true, false)
+    authRevocable <- Gen.oneOf(true, false)
+  } yield AccountDetail(accountId, sequence, lastModifiedLedger, subEntryCount, authRequired, authRevocable)
+
+  implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
+
+  implicit val formats: Formats = Serialization.formats(NoTypeHints) + AccountDetailReader
+
+  def asJson(detail: AccountDetail): String = {
+    val id = detail.id.encodeToString
+    s"""
+      |{
+      |  "_links": {
+      |    "self": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id"
+      |    },
+      |    "transactions": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/transactions{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "operations": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/operations{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "payments": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/payments{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "effects": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/effects{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "offers": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/offers{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "trades": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/trades{?cursor,limit,order}",
+      |      "templated": true
+      |    },
+      |    "data": {
+      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/data/{key}",
+      |      "templated": true
+      |    }
+      |  },
+      |  "id": "$id",
+      |  "account_id": "$id",
+      |  "sequence": "${detail.sequence}",
+      |  "subentry_count": ${detail.subEntryCount},
+      |  "last_modified_ledger": ${detail.lastModifiedLedger},
+      |  "last_modified_time": "2020-05-24T04:34:21Z",
+      |  "thresholds": {
+      |    "low_threshold": 0,
+      |    "med_threshold": 0,
+      |    "high_threshold": 0
+      |  },
+      |  "flags": {
+      |    "auth_required": ${detail.authRequired},
+      |    "auth_revocable": ${detail.authRevocable},
+      |    "auth_immutable": false
+      |  },
+      |  "balances": [
+      |    {
+      |      "balance": "10000.0000000",
+      |      "buying_liabilities": "0.0000000",
+      |      "selling_liabilities": "0.0000000",
+      |      "asset_type": "native"
+      |    }
+      |  ],
+      |  "signers": [
+      |    {
+      |      "weight": 1,
+      |      "key": "$id",
+      |      "type": "ed25519_public_key"
+      |    }
+      |  ],
+      |  "data": {},
+      |  "paging_token": "$id"
+      |}""".stripMargin
+  }
+
+}

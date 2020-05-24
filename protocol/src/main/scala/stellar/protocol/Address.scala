@@ -1,7 +1,7 @@
 package stellar.protocol
 
 import cats.data.State
-import stellar.protocol.xdr.Encode.{bytes, int, long}
+import stellar.protocol.xdr.Encode.{bytes, int}
 import stellar.protocol.xdr.{Decoder, Encodable}
 
 /**
