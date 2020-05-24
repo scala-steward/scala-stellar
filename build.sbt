@@ -4,7 +4,7 @@ homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar-sdk"
 
 lazy val root = project
   .in(file("."))
-  .aggregate(protocol)
+  .aggregate(protocol, horizon)
 
 lazy val protocol = project
   .in(file("protocol"))
