@@ -22,7 +22,11 @@ object AmountReaderSpec {
   def asJsonDoc(amount: Amount): String =
     s"""
        |{
-       |  "balance":"${amount.units.toDouble / 10_000_000}"
+       |  "balance":"${toDecimalString(amount.units)}"
        |  ${AssetReaderSpec.asJsonDoc(amount.asset).replaceAll("[{}]", "").trim}
        |}""".stripMargin
+
+  private def toDecimalString(long: Long): String =
+    (BigDecimal(long) / BigDecimal(10_000_000)).bigDecimal.toPlainString
+
 }

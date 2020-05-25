@@ -21,11 +21,18 @@ case class Balance(amount: Amount,
                    authorized: Boolean,
                    authorizedToMaintainLiabilities: Boolean)
 
-/*
 object BalanceReader extends JsReader[Balance]({ o: JObject =>
+  import JsReader._
   implicit val formats: Formats = DefaultFormats + new AmountReader("balance")
 
-
+  Balance(
+    amount = o.extract[Amount],
+    limit = doubleStringToLong("limit", o),
+    buyingLiabilities = doubleStringToLong("buying_liabilities", o),
+    sellingLiabilities = doubleStringToLong("selling_liabilities", o),
+    authorized = (o \ "is_authorized").extractOpt[Boolean].getOrElse(false),
+    authorizedToMaintainLiabilities = (o \ "is_authorized_to_maintain_liabilities").extractOpt[Boolean].getOrElse(false)
+  )
 
 
 /*
@@ -47,6 +54,6 @@ object BalanceReader extends JsReader[Balance]({ o: JObject =>
       "is_authorized": true,
       "is_authorized_to_maintain_liabilities": true
     },
+    */
 
- */
-})*/
+})

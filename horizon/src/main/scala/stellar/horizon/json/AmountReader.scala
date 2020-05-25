@@ -5,10 +5,11 @@ import org.json4s.JsonAST.JObject
 import stellar.protocol.{Amount, Asset}
 
 class AmountReader(unitsTag: String) extends JsReader[Amount]({ o: JObject =>
+  import JsReader.doubleStringToLong
   implicit val format: Formats = DefaultFormats + AssetReader
 
   Amount(
-    units = (BigDecimal((o \ unitsTag).extract[String]) * BigDecimal(10).pow(7)).toLongExact,
+    units = doubleStringToLong(unitsTag, o),
     asset = (o).extract[Asset]
   )
 })
