@@ -33,27 +33,4 @@ object BalanceReader extends JsReader[Balance]({ o: JObject =>
     authorized = (o \ "is_authorized").extractOpt[Boolean].getOrElse(false),
     authorizedToMaintainLiabilities = (o \ "is_authorized_to_maintain_liabilities").extractOpt[Boolean].getOrElse(false)
   )
-
-
-/*
-    {
-      "balance": "19309.4481807",
-      "buying_liabilities": "0.0000000",
-      "selling_liabilities": "0.0000000",
-      "asset_type": "native"
-    }
-
-    {
-      "balance": "16001.4653423",
-      "limit": "100000000000.0000000",
-      "buying_liabilities": "0.0000000",
-      "selling_liabilities": "2.3000000",
-      "asset_type": "credit_alphanum4",
-      "asset_code": "EURT",
-      "asset_issuer": "GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S",
-      "is_authorized": true,
-      "is_authorized_to_maintain_liabilities": true
-    },
-    */
-
 })
