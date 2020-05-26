@@ -9,6 +9,7 @@ import org.json4s.{Formats, NoTypeHints}
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
+import stellar.horizon.json.SignerReaderSpec
 
 class AccountDetailSpec extends Specification with ScalaCheck {
   import AccountDetails._
@@ -24,6 +25,7 @@ class AccountDetailSpec extends Specification with ScalaCheck {
 object AccountDetails {
   import stellar.horizon.BalanceSpec._
   import stellar.protocol.AccountIds._
+  import stellar.protocol.Signers._
 
   val genAccountDetail: Gen[AccountDetail] = for {
     accountId <- genAccountId
@@ -35,8 +37,9 @@ object AccountDetails {
     thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map { case List(l, m, h) => Thresholds(l, m, h) }
     authFlags <- Gen.listOfN(3, Gen.oneOf(false, true)).map { case List(a, b, c) => AuthFlags(a, b, c) }
     balances <- Gen.listOf(genBalance)
+    signers <- Gen.listOf(genSigner)
   } yield AccountDetail(accountId, sequence, lastModifiedLedger, lastModifiedTime, subEntryCount,
-    thresholds, authFlags, balances)
+    thresholds, authFlags, balances, signers)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
@@ -66,14 +69,9 @@ object AccountDetails {
       |    ${detail.balances.map(BalanceSpec.asJsonDoc).mkString(",")}
       |  ],
       |  "signers": [
-      |    {
-      |      "weight": 1,
-      |      "key": "$id",
-      |      "type": "ed25519_public_key"
-      |    }
+      |    ${detail.signers.map(SignerReaderSpec.asJsonDoc).mkString(",")}
       |  ],
-      |  "data": {},
-      |  "paging_token": "$id"
+      |  "data": {}
       |}""".stripMargin
   }
 

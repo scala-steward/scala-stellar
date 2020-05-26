@@ -4,8 +4,8 @@ import java.time.ZonedDateTime
 
 import org.json4s.JsonAST.JObject
 import org.json4s.{DefaultFormats, Formats}
-import stellar.horizon.json.JsReader
-import stellar.protocol.AccountId
+import stellar.horizon.json.{JsReader, SignerReader}
+import stellar.protocol.{AccountId, Signer}
 
 case class AccountDetail(id: AccountId,
                          sequence: Long,
@@ -15,12 +15,12 @@ case class AccountDetail(id: AccountId,
                          thresholds: Thresholds,
                          authFlags: AuthFlags,
                          balances: List[Balance],
-                         //                         signers: List[Signer],
+                         signers: List[Signer],
                          //                         data: Map[String, Array[Byte]]
                         )
 
 object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
-  implicit val formats: Formats = DefaultFormats + ThresholdsReader + AuthFlagsReader + BalanceReader
+  implicit val formats: Formats = DefaultFormats + ThresholdsReader + AuthFlagsReader + BalanceReader + SignerReader
 
   val id = AccountId((o \ "id").extract[String])
   val seq = (o \ "sequence").extract[String].toLong
@@ -30,8 +30,9 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
   val thresholds = (o \ "thresholds").extract[Thresholds]
   val flags = (o \ "flags").extract[AuthFlags]
   val balances = (o \ "balances").extract[List[Balance]]
+  val signers = (o \ "signers").extract[List[Signer]]
 
-  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds, flags, balances
+  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds, flags, balances, signers
 
     /*, signers, data*/)
 
