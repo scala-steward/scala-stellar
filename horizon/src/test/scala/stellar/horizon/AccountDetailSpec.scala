@@ -22,6 +22,7 @@ class AccountDetailSpec extends Specification with ScalaCheck {
 }
 
 object AccountDetails {
+  import stellar.horizon.BalanceSpec._
   import stellar.protocol.AccountIds._
 
   val genAccountDetail: Gen[AccountDetail] = for {
@@ -33,8 +34,9 @@ object AccountDetails {
     subEntryCount <- Gen.posNum[Int]
     thresholds <- Gen.listOfN(3, Gen.posNum[Int]).map { case List(l, m, h) => Thresholds(l, m, h) }
     authFlags <- Gen.listOfN(3, Gen.oneOf(false, true)).map { case List(a, b, c) => AuthFlags(a, b, c) }
+    balances <- Gen.listOf(genBalance)
   } yield AccountDetail(accountId, sequence, lastModifiedLedger, lastModifiedTime, subEntryCount,
-    thresholds, authFlags)
+    thresholds, authFlags, balances)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
@@ -44,39 +46,6 @@ object AccountDetails {
     val id = detail.id.encodeToString
     s"""
       |{
-      |  "_links": {
-      |    "self": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id"
-      |    },
-      |    "transactions": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/transactions{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "operations": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/operations{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "payments": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/payments{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "effects": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/effects{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "offers": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/offers{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "trades": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/trades{?cursor,limit,order}",
-      |      "templated": true
-      |    },
-      |    "data": {
-      |      "href": "https://horizon-testnet.stellar.org/accounts/$id/data/{key}",
-      |      "templated": true
-      |    }
-      |  },
       |  "id": "$id",
       |  "account_id": "$id",
       |  "sequence": "${detail.sequence}",
@@ -94,12 +63,7 @@ object AccountDetails {
       |    "auth_immutable": ${detail.authFlags.immutable}
       |  },
       |  "balances": [
-      |    {
-      |      "balance": "10000.0000000",
-      |      "buying_liabilities": "0.0000000",
-      |      "selling_liabilities": "0.0000000",
-      |      "asset_type": "native"
-      |    }
+      |    ${detail.balances.map(BalanceSpec.asJsonDoc).mkString(",")}
       |  ],
       |  "signers": [
       |    {
