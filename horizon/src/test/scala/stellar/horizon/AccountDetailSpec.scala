@@ -3,6 +3,7 @@ package stellar.horizon
 import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME
 import java.time.{Instant, ZoneId}
 
+import okio.ByteString
 import org.json4s.native.JsonMethods.parse
 import org.json4s.native.Serialization
 import org.json4s.{Formats, NoTypeHints}
@@ -10,6 +11,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import stellar.horizon.json.SignerReaderSpec
+import stellar.protocol.xdr.ByteArrays
 
 class AccountDetailSpec extends Specification with ScalaCheck {
   import AccountDetails._
@@ -19,7 +21,6 @@ class AccountDetailSpec extends Specification with ScalaCheck {
       parse(asJsonDoc(accountDetail)).extract[AccountDetail] mustEqual accountDetail
     }
   }
-
 }
 
 object AccountDetails {
@@ -38,8 +39,12 @@ object AccountDetails {
     authFlags <- Gen.listOfN(3, Gen.oneOf(false, true)).map { case List(a, b, c) => AuthFlags(a, b, c) }
     balances <- Gen.listOf(genBalance)
     signers <- Gen.listOf(genSigner)
+    data <- Gen.mapOf(for {
+      key <- Gen.identifier
+      value <- Gen.alphaNumStr.map(v => new ByteString(v.getBytes("UTF-8")))
+    } yield key -> value)
   } yield AccountDetail(accountId, sequence, lastModifiedLedger, lastModifiedTime, subEntryCount,
-    thresholds, authFlags, balances, signers)
+    thresholds, authFlags, balances, signers, data)
 
   implicit val arbAccountDetail: Arbitrary[AccountDetail] = Arbitrary(genAccountDetail)
 
@@ -71,7 +76,9 @@ object AccountDetails {
       |  "signers": [
       |    ${detail.signers.map(SignerReaderSpec.asJsonDoc).mkString(",")}
       |  ],
-      |  "data": {}
+      |  "data": {
+      |    ${detail.data.map { case (k, v) => s""""$k":"${v.base64()}""""}.mkString(",")}
+      |  }
       |}""".stripMargin
   }
 

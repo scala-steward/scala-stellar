@@ -2,6 +2,7 @@ package stellar.horizon
 
 import java.time.ZonedDateTime
 
+import okio.ByteString
 import org.json4s.JsonAST.JObject
 import org.json4s.{DefaultFormats, Formats}
 import stellar.horizon.json.{JsReader, SignerReader}
@@ -16,8 +17,7 @@ case class AccountDetail(id: AccountId,
                          authFlags: AuthFlags,
                          balances: List[Balance],
                          signers: List[Signer],
-                         //                         data: Map[String, Array[Byte]]
-                        )
+                         data: Map[String, ByteString])
 
 object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
   implicit val formats: Formats = DefaultFormats + ThresholdsReader + AuthFlagsReader + BalanceReader + SignerReader
@@ -31,9 +31,7 @@ object AccountDetailReader extends JsReader[AccountDetail]({ o: JObject =>
   val flags = (o \ "flags").extract[AuthFlags]
   val balances = (o \ "balances").extract[List[Balance]]
   val signers = (o \ "signers").extract[List[Signer]]
+  val data = (o \ "data").extract[Map[String, String]].view.mapValues(ByteString.decodeBase64).toMap
 
-  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds, flags, balances, signers
-
-    /*, signers, data*/)
-
+  AccountDetail(id, seq, lastModifiedLedger, lastModifiedTime, subEntryCount, thresholds, flags, balances, signers, data)
 })
