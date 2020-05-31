@@ -1,7 +1,7 @@
 package stellar.horizon.json
 
 import org.json4s.native.JsonMethods.parse
-import org.json4s.{DefaultFormats, Formats, JsonInput}
+import org.json4s.{DefaultFormats, Formats}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import stellar.protocol.Amount

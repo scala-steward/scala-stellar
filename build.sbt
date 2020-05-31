@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "2.13.2"
 
-homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar-sdk"))
+homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar"))
 
 lazy val `scala-sdk` = project
   .in(file("."))
@@ -15,7 +15,7 @@ lazy val protocol = project
       "net.i2p.crypto" % "eddsa" % "0.3.0",
       "com.squareup.okio" % "okio" % "2.6.0",
     ) ::: logging ::: specs2,
-    scalacOptions += "-deprecation",
+    scalacOptions ++= List("-deprecation", "-feature"),
     coverage(99)
   )
 
@@ -30,7 +30,7 @@ lazy val horizon = project
       "com.squareup.okhttp3" % "okhttp" % "4.7.2",
       "org.json4s" %% "json4s-native" % "3.6.8",
     ),
-    scalacOptions += "-deprecation",
+    scalacOptions ++= List("-deprecation", "-feature"),
     coverage(99)
   )
 

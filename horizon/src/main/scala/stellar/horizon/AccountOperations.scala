@@ -6,7 +6,7 @@ import org.json4s.{DefaultFormats, Formats}
 import stellar.horizon.json.AccountDetailReader
 import stellar.protocol.AccountId
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.Try
 
 /**
@@ -14,36 +14,29 @@ import scala.util.Try
  * @tparam F the effect type.
  */
 trait AccountOperations[F[_]] {
-  protected val horizon: Horizon[F]
+  def get(path: String, params: Map[String, String] = Map.empty): F[Response]
+
+  implicit protected val formats: Formats = DefaultFormats + AccountDetailReader
 
   def accountDetail(accountId: AccountId): F[AccountDetail]
   protected def accountDetailResponse(accountId: AccountId): F[Response] =
-    horizon.get(s"accounts/${accountId.encodeToString}")
+    get(s"accounts/${accountId.encodeToString}")
 
 }
 
 /**
  * Account operations effected by Scala Try.
- * @param horizon how to access the Horizon instance
  */
-class AccountOperationsBlockingInterpreter(
-  protected val horizon: Horizon[Try]
-) extends AccountOperations[Try] {
-  implicit val formats: Formats = DefaultFormats + AccountDetailReader
-
+trait AccountOperationsSyncInterpreter extends AccountOperations[Try] {
   override def accountDetail(accountId: AccountId): Try[AccountDetail] =
     accountDetailResponse(accountId).map(response => parse(response.body().string()).extract[AccountDetail])
 }
 
 /**
  * Account operations effected by Scala Future.
- * @param horizon how to access the Horizon instance
- * @param ec a Future execution context
  */
-class AccountOperationsAsyncInterpreter(
-  protected val horizon: Horizon[Future]
-)(implicit ec: ExecutionContext) extends AccountOperations[Future] {
-  implicit val formats: Formats = DefaultFormats + AccountDetailReader
+trait AccountOperationsAsyncInterpreter extends AccountOperations[Future] {
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def accountDetail(accountId: AccountId): Future[AccountDetail] =
     accountDetailResponse(accountId).map(response => parse(response.body().string()).extract[AccountDetail])

@@ -17,7 +17,7 @@ trait HttpExchange[F[_]] {
 /**
  * Execute an HTTP exchange, returning a Try.
  */
-object HttpExchangeSync extends HttpExchange[Try] {
+trait HttpExchangeSync extends HttpExchange[Try] {
   private val client: OkHttpClient = new OkHttpClient()
   override def invoke(request: Request): Try[Response] = Try(client.newCall(request).execute())
 }
@@ -25,7 +25,7 @@ object HttpExchangeSync extends HttpExchange[Try] {
 /**
  * Execute an HTTP exchange, returning a Future.
  */
-object HttpExchangeAsync extends HttpExchange[Future] {
+trait HttpExchangeAsync extends HttpExchange[Future] {
   private val client: OkHttpClient = new OkHttpClient()
   override def invoke(request: Request): Future[Response] = {
     val call = client.newCall(request)

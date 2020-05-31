@@ -14,7 +14,7 @@ class HttpExchangeSpec(implicit ec: ExecutionEnv) extends Specification {
 
   "blocking exchange" should {
     "execute request/response" >> {
-      HttpExchangeSync.invoke(request) must beSuccessfulTry.like { case response: Response =>
+      new HttpExchangeSync{}.invoke(request) must beSuccessfulTry.like { case response: Response =>
         response.body().string() must contain("Public Global Stellar Network ; September 2015")
       }
     }
@@ -22,14 +22,14 @@ class HttpExchangeSpec(implicit ec: ExecutionEnv) extends Specification {
 
   "async exchange" should {
     "execute request/response" >> {
-      HttpExchangeAsync.invoke(request) must beLike[Response] { case response: Response =>
+      new HttpExchangeAsync{}.invoke(request) must beLike[Response] { case response: Response =>
         response.body().string() must contain("Public Global Stellar Network ; September 2015")
       }.await(0, 10.seconds)
     }
 
     "capture failures" >> {
       val badRequest = new Request.Builder().url("http://localtoast:42/").build
-      HttpExchangeAsync.invoke(badRequest) must throwAn[UnknownHostException].await
+      new HttpExchangeAsync{}.invoke(badRequest) must throwAn[UnknownHostException].await
     }
   }
 

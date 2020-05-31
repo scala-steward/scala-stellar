@@ -17,17 +17,17 @@ class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification wi
 
   "account operation blocking interpreter" should {
     "fetch account details by account id" >> prop { accountDetail: AccountDetail =>
-      val exchange = FakeHttpExchange.respondOkJson(asJsonDoc(accountDetail), Try(_))
-      val interpreter = new AccountOperationsBlockingInterpreter(Horizon(baseUrl, exchange))
-      interpreter.accountDetail(accountDetail.id) must beSuccessfulTry(accountDetail)
-      exchange.requests.map(_.url.toString) mustEqual List(s"http://localhost/accounts/${accountDetail.id.encodeToString}")
+      val horizon = new Horizon[Try](baseUrl) with FakeHttpExchange[Try] with AccountOperationsSyncInterpreter
+      horizon.respondWith(asJsonDoc(accountDetail), Try(_))
+      horizon.accountDetail(accountDetail.id) must beSuccessfulTry(accountDetail)
+      horizon.requestsMade.map(_.url.toString) mustEqual List(s"http://localhost/accounts/${accountDetail.id.encodeToString}")
     }
 
     "fetch account details by account id" >> prop { accountDetail: AccountDetail =>
-      val exchange = FakeHttpExchange.respondOkJson(asJsonDoc(accountDetail), Future(_))
-      val interpreter = new AccountOperationsAsyncInterpreter(Horizon(baseUrl, exchange))
-      interpreter.accountDetail(accountDetail.id) must beEqualTo(accountDetail).await
-      exchange.requests.map(_.url.toString) mustEqual List(s"http://localhost/accounts/${accountDetail.id.encodeToString}")
+      val horizon = new Horizon[Future](baseUrl) with FakeHttpExchange[Future] with AccountOperationsAsyncInterpreter
+      horizon.respondWith(asJsonDoc(accountDetail), Future(_))
+      horizon.accountDetail(accountDetail.id) must beEqualTo(accountDetail).await
+      horizon.requestsMade.map(_.url.toString) mustEqual List(s"http://localhost/accounts/${accountDetail.id.encodeToString}")
     }
   }
 }

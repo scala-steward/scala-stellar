@@ -19,7 +19,7 @@ class AssetReaderSpec extends Specification with ScalaCheck {
 }
 
 object AssetReaderSpec {
-  def asJsonDoc(asset: Asset) = asset match {
+  def asJsonDoc(asset: Asset): String = asset match {
     case Lumens => """{"asset_type":"native"}"""
     case Token(code, issuer) =>
       s"""
