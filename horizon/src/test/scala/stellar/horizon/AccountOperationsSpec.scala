@@ -22,7 +22,9 @@ class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification wi
       horizon.accountDetail(accountDetail.id) must beSuccessfulTry(accountDetail)
       horizon.requestsMade.map(_.url.toString) mustEqual List(s"http://localhost/accounts/${accountDetail.id.encodeToString}")
     }
+  }
 
+  "account operation async interpreter" should {
     "fetch account details by account id" >> prop { accountDetail: AccountDetail =>
       val horizon = new Horizon[Future](baseUrl) with FakeHttpExchange[Future] with AccountOperationsAsyncInterpreter
       horizon.respondWith(asJsonDoc(accountDetail), Future(_))
