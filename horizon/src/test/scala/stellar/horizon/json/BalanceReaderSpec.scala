@@ -1,15 +1,16 @@
-package stellar.horizon
+package stellar.horizon.json
 
 import org.json4s.native.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats}
 import org.scalacheck.{Arbitrary, Gen}
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
+import stellar.horizon.Balance
 
 import scala.util.Random
 
-class BalanceSpec extends Specification with ScalaCheck {
-  import BalanceSpec._
+class BalanceReaderSpec extends Specification with ScalaCheck {
+  import BalanceReaderSpec._
 
   "balance" should {
     "deserialise from json" >> prop { balance: Balance =>
@@ -18,13 +19,12 @@ class BalanceSpec extends Specification with ScalaCheck {
   }
 }
 
-object BalanceSpec {
-  import stellar.horizon.json.AmountReaderSpec
+object BalanceReaderSpec {
   import stellar.protocol.Amounts._
 
   val genBalance: Gen[Balance] = for {
     amount <- genAmount
-    limit <- Gen.posNum[Long]
+    limit <- Gen.option(Gen.posNum[Long])
     buyingLiabilities <- Gen.posNum[Long]
     sellingLiabilities <- Gen.posNum[Long]
     authorized <- Gen.oneOf(true, false)
@@ -38,7 +38,7 @@ object BalanceSpec {
   def asJsonDoc(balance: Balance): String =
     s"""
        |{
-       |  "limit": "${toDecimalString(balance.limit)}",
+       |  ${balance.limit.map(limit => s""""limit": "${toDecimalString(limit)}",""").getOrElse("")}
        |  "buying_liabilities": "${toDecimalString(balance.buyingLiabilities)}",
        |  "selling_liabilities": "${toDecimalString(balance.sellingLiabilities)}",
        |  ${maybeOmitWhenFalse("is_authorized", balance.authorized)}

@@ -1,7 +1,5 @@
 package stellar.horizon
 
-import org.json4s.{DefaultFormats, Formats, JObject}
-import stellar.horizon.json.{AmountReader, JsReader}
 import stellar.protocol.Amount
 
 /**
@@ -14,23 +12,12 @@ import stellar.protocol.Amount
  * @param authorized                      If true, the account can send, receive, buy and sell this asset.
  * @param authorizedToMaintainLiabilities If true, the account can maintain offers to buy and sell this asset, but not send or receive.
  */
-case class Balance(amount: Amount,
-                   limit: Long,
-                   buyingLiabilities: Long,
-                   sellingLiabilities: Long,
-                   authorized: Boolean,
-                   authorizedToMaintainLiabilities: Boolean)
+case class Balance(
+  amount: Amount,
+  limit: Option[Long],
+  buyingLiabilities: Long,
+  sellingLiabilities: Long,
+  authorized: Boolean,
+  authorizedToMaintainLiabilities: Boolean
+)
 
-object BalanceReader extends JsReader[Balance]({ o: JObject =>
-  import JsReader._
-  implicit val formats: Formats = DefaultFormats + new AmountReader("balance")
-
-  Balance(
-    amount = o.extract[Amount],
-    limit = doubleStringToLong("limit", o),
-    buyingLiabilities = doubleStringToLong("buying_liabilities", o),
-    sellingLiabilities = doubleStringToLong("selling_liabilities", o),
-    authorized = (o \ "is_authorized").extractOpt[Boolean].getOrElse(false),
-    authorizedToMaintainLiabilities = (o \ "is_authorized_to_maintain_liabilities").extractOpt[Boolean].getOrElse(false)
-  )
-})
