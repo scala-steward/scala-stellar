@@ -6,7 +6,6 @@ import stellar.protocol.xdr.{Decoder, Encodable}
 
 /**
  * The thresholds for operations on this account, as described in transaction meta data for ledger effects.
- * This differs from @see[[Thresholds]] in that it also contains the master weight for the account's primary signature.
  *
  * @param master The weight provided by the primary signature for this account.
  * @param low The weight required for a valid transaction including the Allow Trust and Bump Sequence operations.
