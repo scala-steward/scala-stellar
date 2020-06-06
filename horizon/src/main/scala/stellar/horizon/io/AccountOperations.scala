@@ -1,9 +1,9 @@
-package stellar.horizon
+package stellar.horizon.io
 
 import okhttp3.{HttpUrl, Request, Response}
 import org.json4s.native.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats}
-import stellar.horizon.io.HttpOperations
+import stellar.horizon.AccountDetail
 import stellar.horizon.io.HttpOperations.NotFound
 import stellar.horizon.json.AccountDetailReader
 import stellar.protocol.AccountId
@@ -48,10 +48,9 @@ class AccountOperationsSyncInterpreter(
     val request = AccountOperations.accountDetailRequest(horizonBaseUrl, accountId)
     for {
       response <- httpExchange.invoke(request)
-      result <- response.code() match {
-        case 200 => Try(AccountOperations.responseToAccountDetails(response))
-        case 404 => Failure(NotFound(s"account.detail(${accountId.encodeToString})"))
-      }
+      result <- httpExchange.handle(response,
+        Try(AccountOperations.responseToAccountDetails(response))
+      )
     } yield result
   }
 
@@ -69,10 +68,9 @@ class AccountOperationsAsyncInterpreter(
     val request = AccountOperations.accountDetailRequest(horizonBaseUrl, accountId)
     for {
       response <- httpExchange.invoke(request)
-      result <- response.code() match {
-        case 200 => Future(AccountOperations.responseToAccountDetails(response))
-        case 404 => Future { throw NotFound(s"account.detail(${accountId.encodeToString})") }
-      }
+      result <- httpExchange.handle(response,
+        Future(AccountOperations.responseToAccountDetails(response))
+      )
     } yield result
   }
 }
