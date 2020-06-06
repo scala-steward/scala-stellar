@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/Synesso/scala-stellar/workflows/Build/badge.svg?branch=master)
 
-This is a work-in-progress rebuild of the [Scala Stellar SDK](https://github.com/Synesso/scala-stellar-sdk/)
+This is a work-in-progress rebuild of the [Scala Stellar SDK](https://github.com/Synesso/scala-stellar-sdk/). It is ~5% complete.
 
 Use this software if you wish to query and transact on the Stellar network via Scala.
 
