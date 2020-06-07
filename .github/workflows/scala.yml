@@ -21,4 +21,6 @@ jobs:
 
     - name: Publish Site
       if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
       run: sbt ghpagesPushSite
