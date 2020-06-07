@@ -19,8 +19,17 @@ jobs:
     - name: Coverage Report
       uses: codecov/codecov-action@v1
 
+    - name: Generate Scaladoc
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        sbt unidoc
+        mkdir -p target/site/api
+        mv target/scala-2.13/unidoc/* target/site/api
+
     - name: Publish Site
       if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
-      run: sbt ghpagesPushSite
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: target/site

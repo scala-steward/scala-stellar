@@ -4,12 +4,7 @@ homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar"))
 
 lazy val `scala-stellar` = project
   .in(file("."))
-  .enablePlugins(GhpagesPlugin, ScalaUnidocPlugin)
-  .settings(
-    siteSubdirName in ScalaUnidoc := "api",
-    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
-    git.remoteRepo := "git@github.com:synesso/scala-stellar.git",
-  )
+  .enablePlugins(ScalaUnidocPlugin)
   .aggregate(protocol, horizon)
 
 lazy val protocol = project
