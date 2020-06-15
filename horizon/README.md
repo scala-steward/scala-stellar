@@ -13,10 +13,10 @@ The simplest way to get started is to fork the [exemplar project](https://github
 
 Alternatively, to add the library to an existing project, follow the [instructions on jitpack](https://jitpack.io/#synesso/scala-stellar/).
 
-## Querying Stellar
+## Accessing Horizon
 
 All access to Stellar is via Horizon. The `Horizon` type can be configured for any Horizon instance. For convenience,
-the SDF instances are pre-defined. If you have provisioned your own Horizon instance, you can configure this via URL.
+the SDF instances are pre-defined.
 
 ```scala
 import stellar.horizon._
@@ -26,18 +26,44 @@ val sdfHorizonMainAsync: Horizon[Future] = Horizon.async()
 
 // The SDF testnet Horizon instance, returning blocking (Try) values.
 val sdfHorizonTestSync: Horizon[Try] = Horizon.sync(baseUrl = Horizon.Endpoints.Test)
+````
 
+ If you have provisioned your own Horizon instance, you can configure this via URL.
+```scala
 // A custom Horizon instance running locally in a docker container (configured separately).
 val localHorizon: Horizon[Future] = Horizon.async(baseUrl = HttpUrl.parse("http://localhost:8000/"))
 ```
 
-### Operations
+For brevity, the remainder of this guide will assume a synchronous Horizon instance (`Horizon[Try]`).
 
-`Horizon` provides operations grouped into several themes:
+### Creating a Test Account
 
-* `horizon`
-  * `account`
-    * `detail` - given an account id, provides the public details of that account.
-  * `meta`
-    * `state` - current state and capabilities of the instance, including protocol & software versions, ledger
-                  ids known and whether a testnet faucet (friendbot) is available.
+Creating and funding a new account from nothing is only possible on test networks. Generate a random account id and
+request funding of the account via the Horizon's attached FriendBot instance.
+
+```scala
+val horizon = Horizon.sync(Horizon.Endpoints.Test)
+val accountId = AccountId.random
+val response = horizon.friendbot.create(accountId)
+```
+
+Note that attempting this on a Horizon instance that does not have FriendBot installed will fail.
+
+### Horizon Meta information
+
+You can determine if FriendBot is installed, along with other information about the Horizon instance, by checking the
+[HorizonState](https://synesso.github.io/scala-stellar/api/stellar/horizon/HorizonState.html).
+
+```scala
+val state: Try[HorizonState] = horizon.meta.state
+val friendBotUrl: Try[Option[HttpUrl]] = state.map(_.friendbotUrl)
+```
+
+
+### Account details
+
+With an account newly created on the network, obtain the details of the account.
+
+```scala
+val accountDetail: Try[AccountDetail] = horizon.account.detail(accountId)
+```
