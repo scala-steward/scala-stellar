@@ -39,8 +39,8 @@ val logging = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
 )
 val specs2 = List(
-  "org.specs2" %% "specs2-core" % "4.10.2" % "test",
-  "org.specs2" %% "specs2-scalacheck" % "4.10.2" % "test",
+  "org.specs2" %% "specs2-core" % "4.10.3" % "test",
+  "org.specs2" %% "specs2-scalacheck" % "4.10.3" % "test",
 )
 
 def coverage(min: Int) = List(
