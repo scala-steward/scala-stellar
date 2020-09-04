@@ -12,7 +12,7 @@ lazy val protocol = project
   .settings(
     libraryDependencies ++= List(
       "commons-codec" % "commons-codec" % "1.14",
-      "org.typelevel" %% "cats-core" % "2.1.1",
+      "org.typelevel" %% "cats-core" % "2.2.0",
       "net.i2p.crypto" % "eddsa" % "0.3.0",
       "com.squareup.okio" % "okio" % "2.8.0",
     ) ::: logging ::: specs2,
