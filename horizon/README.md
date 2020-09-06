@@ -43,7 +43,8 @@ request funding of the account via the Horizon's attached FriendBot instance.
 
 ```scala
 val horizon = Horizon.sync(Horizon.Endpoints.Test)
-val accountId = AccountId.random
+val seed = Seed.random
+val accountId = seed.accountId
 val response = horizon.friendbot.create(accountId)
 ```
 
