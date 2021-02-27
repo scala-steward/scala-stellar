@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.13.3"
+ThisBuild / scalaVersion := "2.13.5"
 
 homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar"))
 
