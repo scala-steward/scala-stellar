@@ -1,8 +1,10 @@
 package stellar.horizon
 
 import okio.ByteString
+import org.stellar.xdr.CreateAccountResultCode.CREATE_ACCOUNT_SUCCESS
+import org.stellar.xdr.OperationType.CREATE_ACCOUNT
 import org.stellar.xdr._
-import stellar.event.{AccountCreated, OperationEvent}
+import stellar.event.{AccountCreated, CreateAccountOpEvent, OperationEvent}
 import stellar.protocol.{AccountId, Amount, Lumen}
 
 case class TransactionResponse(
@@ -35,19 +37,7 @@ object TransactionResponse {
       operationsRequested.zip(rawResults).map {
         case (requested, result) =>
           requested.getBody.getDiscriminant match {
-            case OperationType.CREATE_ACCOUNT =>
-              result.getDiscriminant match {
-                case OperationResultCode.opINNER =>
-                  result.getTr.getCreateAccountResult.getDiscriminant match {
-                    case CreateAccountResultCode.CREATE_ACCOUNT_SUCCESS =>
-                      val op = requested.getBody.getCreateAccountOp
-                      AccountCreated(
-                        accountId = AccountId.decode(op.getDestination.getAccountID),
-                        startingBalance = op.getStartingBalance.getInt64,
-                        fundingAccountId = AccountId.decode(requested.getSourceAccount)
-                      )
-                  }
-              }
+            case CREATE_ACCOUNT => CreateAccountOpEvent.decode(requested, result)
             case default => throw new IllegalStateException(s"Unexpected operation type: $default")
           }
       }
