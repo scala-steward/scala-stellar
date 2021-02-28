@@ -1,11 +1,10 @@
 package stellar.protocol
 
-import okio.ByteString
-import org.specs2.matcher.{AnyMatchers, Expectable, MatchResult, Matcher}
-import stellar.protocol.xdr.{Decoder, Encodable}
+import org.specs2.matcher.AnyMatchers
 
 trait XdrSerdeMatchers extends AnyMatchers {
 
+/*
   def xdrDecodeAndEncodeDiscriminated[T <: Encodable](decoder: Decoder[T]): Matcher[T] = new Matcher[T] {
     def apply[S <: T](s: Expectable[S]): MatchResult[S] = {
       val (remaining, value) = decoder.decodeOld.run(s.value.encodeDiscriminated).value
@@ -14,7 +13,9 @@ trait XdrSerdeMatchers extends AnyMatchers {
       else result(value == s.value, ok, s"did not equal. expected ${s.value} got $value", s)
     }
   }
+*/
 
+/*
   def xdrDecodeAndEncode[T <: Encodable](decoder: Decoder[T]): Matcher[T] = new Matcher[T] {
     def apply[S <: T](s: Expectable[S]): MatchResult[S] = {
       val encodedBase64 = s.value.encodeXdr
@@ -25,5 +26,6 @@ trait XdrSerdeMatchers extends AnyMatchers {
       else result(value == s.value, ok, s"did not equal. expected ${s.value} got $value", s)
     }
   }
+*/
 
 }

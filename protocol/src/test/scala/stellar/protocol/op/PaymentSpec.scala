@@ -8,13 +8,6 @@ import stellar.protocol.Amounts.genAmount
 import stellar.protocol.XdrSerdeMatchers
 
 class PaymentSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
-  import Payments._
-
-  "payment" should {
-    "encode and decode" >> prop { payment: Payment =>
-      payment should xdrDecodeAndEncode(Payment)
-    }
-  }
 }
 
 object Payments {

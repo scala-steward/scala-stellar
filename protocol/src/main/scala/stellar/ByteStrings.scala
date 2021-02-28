@@ -1,10 +1,11 @@
-package stellar.protocol.xdr
+package stellar
+
 
 import okio.ByteString
 
 import scala.annotation.tailrec
 
-object ByteArrays {
+object ByteStrings {
 
   def checksum(bytes: Array[Byte]): ByteString = {
     // This code calculates CRC16-XModem checksum
@@ -31,15 +32,4 @@ object ByteArrays {
     val crc = loop(bytes.toIndexedSeq, 0x0000)
     new ByteString(Array(crc.toByte, (crc >>> 8).toByte))
   }
-
-  def paddedByteArray(bs: Array[Byte], length: Int): Array[Byte] = {
-    val padded = Array.ofDim[Byte](math.max(length, bs.length))
-    System.arraycopy(bs, 0, padded, 0, bs.length)
-    padded
-  }
-
-  def paddedByteArray(s: String, length: Int): Array[Byte] = paddedByteArray(s.getBytes("US-ASCII"), length)
-
-  def paddedByteArrayToString(bs: Array[Byte]): String = new String(bs, "US-ASCII").split("\u0000")(0)
-
 }

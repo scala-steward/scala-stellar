@@ -58,6 +58,7 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
     // TODO - maintain a local sequence number?
 
     "be able to transact a payment" >> {
+      /*
       val horizon = Horizon.async(Horizon.Networks.Test)
 
       // TODO (jem) - Test account creation should be performed once up-front.
@@ -76,6 +77,9 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
 
       // TODO (jem) - Better assertions
       response must beAnInstanceOf[TransactionResponse].await(0, 10.seconds)
+      */
+
+      pending
     }
   }
 

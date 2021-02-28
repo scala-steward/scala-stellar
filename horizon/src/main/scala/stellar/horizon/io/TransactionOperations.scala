@@ -13,6 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 object TransactionOperations {
+/*
   def postTransactionRequest(horizonBaseUrl: HttpUrl, transaction: Transaction): Request =
     new Request.Builder()
       .url(horizonBaseUrl.newBuilder()
@@ -20,9 +21,10 @@ object TransactionOperations {
         .build)
       .post(new MultipartBody.Builder()
         .setType(MultipartBody.FORM)
-        .addFormDataPart("tx", transaction.encodeXdr)
+        // .addFormDataPart("tx", transaction.encodeXdr) // TODO
         .build)
       .build
+*/
 
   def responseToTransactionResponse(response: Response): TransactionResponse = {
     implicit val formats: Formats = DefaultFormats + TransactionResponseReader
@@ -39,16 +41,16 @@ trait TransactionOperations[F[_]] {
   /**
    * Performs the specified payment.
    *
-   * @param sender    the issuer of the funds
-   * @param recipient the receiver of the funds
-   * @param amount    the amount to be sent
-   * @return the result of the transaction attempted
-   */
+   * param sender    the issuer of the funds
+   * param recipient the receiver of the funds
+   * param amount    the amount to be sent
+   * return the result of the transaction attempted
   def pay(
     sender: Address,
     recipient: Address,
     amount: Amount
   ): F[TransactionResponse]
+   */
 }
 
 /**
@@ -64,12 +66,12 @@ class TransactionOperationsSyncInterpreter(
   /**
    * Performs the specified payment.
    *
-   * @param sender    the issuer of the funds
-   * @param recipient the receiver of the funds
-   * @param amount    the amount to be sent
-   * @return the result of the transaction attempted
-   */
+   * param sender    the issuer of the funds
+   * param recipient the receiver of the funds
+   * param amount    the amount to be sent
+   * return the result of the transaction attempted
   override def pay(sender: Address, recipient: Address, amount: Amount): Try[TransactionResponse] = ???
+   */
 }
 
 /**
@@ -85,11 +87,10 @@ class TransactionOperationsAsyncInterpreter(
   /**
    * Performs the specified payment.
    *
-   * @param sender    the issuer of the funds
-   * @param recipient the receiver of the funds
-   * @param amount    the amount to be sent
-   * @return the result of the transaction attempted
-   */
+   * param sender    the issuer of the funds
+   * param recipient the receiver of the funds
+   * param amount    the amount to be sent
+   * return the result of the transaction attempted
   override def pay(sender: Address, recipient: Address, amount: Amount): Future[TransactionResponse] = {
     for {
       account <- accountOperations.detail(sender.accountId)
@@ -107,5 +108,6 @@ class TransactionOperationsAsyncInterpreter(
       result <- httpExchange.handle(response, Future(TransactionOperations.responseToTransactionResponse(response)))
     } yield result
   }
+   */
 
 }

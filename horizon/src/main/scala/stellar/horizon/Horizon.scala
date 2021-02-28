@@ -36,8 +36,8 @@ object Horizon {
       override def account: AccountOperations[Try] = new AccountOperationsSyncInterpreter(network.url, httpExchange)
       override def friendbot: FriendBotOperations[Try] = new FriendBotOperationsSyncInterpreter(network.url, httpExchange)
       override def meta: MetaOperations[Try] = new MetaOperationsSyncInterpreter(network.url, httpExchange)
-      override def transact(signer: SigningKey): TransactionOperations[Try] =
-        new TransactionOperationsSyncInterpreter(network.url, httpExchange, signer, network.id, account)
+      // override def transact(signer: SigningKey): TransactionOperations[Try] =
+      //   new TransactionOperationsSyncInterpreter(network.url, httpExchange, signer, network.id, account)
     }
   }
 
@@ -56,8 +56,8 @@ object Horizon {
       override def account: AccountOperations[Future] = new AccountOperationsAsyncInterpreter(network.url, httpExchange)
       override def friendbot: FriendBotOperations[Future] = new FriendBotOperationsAsyncInterpreter(network.url, httpExchange)
       override def meta: MetaOperations[Future] = new MetaOperationsAsyncInterpreter(network.url, httpExchange)
-      override def transact(signer: SigningKey): TransactionOperations[Future] =
-        new TransactionOperationsAsyncInterpreter(network.url, httpExchange, signer, network.id, account)
+      // override def transact(signer: SigningKey): TransactionOperations[Future] =
+      //  new TransactionOperationsAsyncInterpreter(network.url, httpExchange, signer, network.id, account)
     }
   }
 }
@@ -66,5 +66,5 @@ sealed trait Horizon[F[_]] {
   def account: AccountOperations[F]
   def friendbot: FriendBotOperations[F]
   def meta: MetaOperations[F]
-  def transact(signer: SigningKey): TransactionOperations[F]
+  // def transact(signer: SigningKey): TransactionOperations[F]
 }
