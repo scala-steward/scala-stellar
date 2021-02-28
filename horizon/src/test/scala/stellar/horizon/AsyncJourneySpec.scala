@@ -28,15 +28,16 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
     "be able to create a new account from a faucet (friendbot), if one is available" >> {
       val horizon = Horizon.async(Horizon.Networks.Test)
       val accountId = AccountId.random
-      horizon.friendbot.create(accountId) must beLike[TransactionResponse] { response =>
-        response.operationEvents mustEqual List(
+      val response = horizon.friendbot.create(accountId)
+      response must beLike[TransactionResponse] { res =>
+        res.operationEvents mustEqual List(
           AccountCreated(
             accountId = accountId,
             startingBalance = Lumen(10_000).units,
             fundingAccountId = FriendBotAccountId
           )
         )
-        response.feeCharged.units must beGreaterThanOrEqualTo(100L)
+        res.feeCharged.units must beGreaterThanOrEqualTo(100L)
       }.await(0, 10.seconds)
     }
 

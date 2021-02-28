@@ -2,8 +2,9 @@ package stellar.horizon
 
 import org.specs2.matcher.Matchers
 import org.specs2.mutable.Specification
+import stellar.event.AccountCreated
 import stellar.horizon.io.HttpOperations.NotFound
-import stellar.protocol.AccountId
+import stellar.protocol.{AccountId, Lumen}
 
 import scala.util.Try
 
@@ -11,6 +12,8 @@ import scala.util.Try
  * Top level tests that demonstrate how to use the blocking endpoints.
  */
 class BlockingJourneySpec extends Specification with Matchers {
+
+  private val FriendBotAccountId = AccountId("GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B43MGK3QJZNSR")
 
   "client software" should {
 
@@ -27,8 +30,16 @@ class BlockingJourneySpec extends Specification with Matchers {
       val horizon = Horizon.sync(Horizon.Networks.Test)
       val accountId = AccountId.random
       val response = horizon.friendbot.create(accountId)
-      // TODO (jem) - When we can transact, make sure to roll the created account back in.
-      response must beSuccessfulTry[TransactionResponse]
+      response must beSuccessfulTry[TransactionResponse].like { res =>
+        res.operationEvents mustEqual List(
+          AccountCreated(
+            accountId = accountId,
+            startingBalance = Lumen(10_000).units,
+            fundingAccountId = FriendBotAccountId
+          )
+        )
+        res.feeCharged.units must beGreaterThanOrEqualTo(100L)
+      }
     }
 
     "fail to create a new account from a faucet (friendbot), if none is available" >> {
