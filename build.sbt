@@ -36,7 +36,7 @@ lazy val horizon = project
   .settings(
     libraryDependencies ++= List(
       "com.squareup.okhttp3" % "okhttp" % "4.9.1",
-      "org.json4s" %% "json4s-native" % "3.6.10",
+      "org.json4s" %% "json4s-native" % "3.6.11",
     ),
     scalacOptions ++= List("-deprecation", "-feature"),
     coverage(95)
