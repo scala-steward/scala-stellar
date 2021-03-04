@@ -4,7 +4,8 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 import stellar.event.AccountCreated
 import stellar.horizon.io.HttpOperations.NotFound
-import stellar.protocol.{AccountId, Lumen, Seed}
+import stellar.protocol.op.CreateAccount
+import stellar.protocol.{AccountId, Lumen, Seed, Transaction}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -54,6 +55,38 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
       val accountDetail: Future[AccountDetail] = horizon.account.detail(accountId)
       accountDetail.map(_.id) must beEqualTo(accountId).await(0, 10.seconds)
     }
+
+    "be able to create a new account" >> {
+      val horizon = Horizon.async(Horizon.Networks.Test)
+      val from = Seed.random
+      val to = Seed.random
+      Await.ready(horizon.friendbot.create(from.accountId), 1.minute)
+      val sourceAccountDetails = Await.result(horizon.account.detail(from.accountId), 10.seconds)
+
+      val transaction = Transaction(
+        networkId = Horizon.Networks.Test.id,
+        source = from.accountId,
+        sequence = sourceAccountDetails.nextSequence,
+        operations = List(
+          CreateAccount(accountId = to.accountId, startingBalance = Lumen(5).units)
+        ),
+        maxFee = 100,
+      ).sign(from)
+
+      val response = horizon.transact(from.accountId, transaction)
+
+      response must beLike[TransactionResponse] { res =>
+        res.operationEvents mustEqual List(
+          AccountCreated(
+            accountId = to.accountId,
+            startingBalance = Lumen(5).units,
+            fundingAccountId = from.accountId
+          )
+        )
+        res.feeCharged.units must beGreaterThanOrEqualTo(100L)
+      }.await(0, 10.seconds)
+    }
+
 
     // TODO - Pay with a specified source and sequence number.
     // TODO - maintain a local sequence number?

@@ -7,7 +7,7 @@ import net.i2p.crypto.eddsa.spec.{EdDSAPrivateKeySpec, EdDSAPublicKeySpec}
 import net.i2p.crypto.eddsa.{EdDSAEngine, EdDSAPrivateKey, EdDSAPublicKey, KeyPairGenerator}
 import okio.ByteString
 import org.apache.commons.codec.binary.Base32
-import org.stellar.xdr.{CryptoKeyType, MuxedAccount, PublicKey}
+import org.stellar.xdr.{AccountID, CryptoKeyType, MuxedAccount, PublicKey, PublicKeyType, Uint256}
 import stellar.ByteStrings
 import stellar.protocol.Key.codec
 
@@ -53,7 +53,7 @@ sealed trait PresentableSignerKey extends Key
  * SigningKey is a key that can be used to sign data, including transactions.
  */
 sealed trait SigningKey extends Key {
-  // def sign(data: ByteString): Signature
+  def sign(payload: ByteString): Signature
 }
 
 /**
@@ -62,9 +62,19 @@ sealed trait SigningKey extends Key {
  * include that sub account id.
  */
 case class AccountId(hash: ByteString) extends PresentableSignerKey {
+
   val hint: ByteString = new ByteString(hash.toByteArray.drop(hash.size() - 4))
   val kind: Byte = (6 << 3).toByte // G
   override def toString: String = s"AccountId($encodeToString)"
+
+  def xdrEncode: AccountID = new AccountID(new PublicKey.Builder()
+    .discriminant(PublicKeyType.PUBLIC_KEY_TYPE_ED25519)
+    .ed25519(new Uint256(hash.toByteArray))
+    .build())
+  def xdrEncodeMultiplexed: MuxedAccount = new MuxedAccount.Builder()
+    .discriminant(CryptoKeyType.KEY_TYPE_ED25519)
+    .ed25519(new Uint256(hash.toByteArray))
+    .build()
 }
 
 object AccountId {
@@ -98,14 +108,12 @@ case class Seed(hash: ByteString) extends SigningKey {
 
   val address: Address = Address(accountId)
 
-/*
-  override def sign(data: ByteString): Signature = {
+  override def sign(payload: ByteString): Signature = {
     val sig = new EdDSAEngine(MessageDigest.getInstance("SHA-512"))
     sig.initSign(sk)
-    sig.update(data.asByteBuffer())
+    sig.update(payload.toByteArray())
     Signature(new ByteString(sig.sign), accountId.hint)
   }
-*/
 }
 
 object Seed {
@@ -126,7 +134,7 @@ object Seed {
  */
 case class PreAuthTx(hash: ByteString) extends PresentableSignerKey with SigningKey {
   val kind: Byte = (19 << 3).toByte // T
-  // override def sign(data: ByteString): Signature = ??? // TODO
+  override def sign(payload: ByteString): Signature = ??? // TODO
 }
 
 object PreAuthTx {
@@ -142,7 +150,7 @@ object PreAuthTx {
  */
 case class HashX(hash: ByteString) extends PresentableSignerKey with SigningKey {
   val kind: Byte = (23 << 3).toByte // X
-  // override def sign(data: ByteString): Signature = Signature(data, data.sha256().substring(28))
+  override def sign(payload: ByteString): Signature = ??? // TODO
 }
 
 object HashX {

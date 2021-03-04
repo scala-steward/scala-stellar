@@ -2,7 +2,7 @@ package stellar.horizon
 
 import okhttp3.{HttpUrl, OkHttpClient}
 import stellar.horizon.io._
-import stellar.protocol.{Key, NetworkId, SigningKey}
+import stellar.protocol.{AccountId, Key, NetworkId, SigningKey, Transaction}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -12,6 +12,7 @@ object Horizon {
 
   object Networks {
     val Main = Network(
+      // TODO - these network ids are not specific to Horizon
       NetworkId("Public Global Stellar Network ; September 2015"),
       HttpUrl.parse("https://horizon.stellar.org/")
     )
@@ -36,8 +37,8 @@ object Horizon {
       override def account: AccountOperations[Try] = new AccountOperationsSyncInterpreter(network.url, httpExchange)
       override def friendbot: FriendBotOperations[Try] = new FriendBotOperationsSyncInterpreter(network.url, httpExchange)
       override def meta: MetaOperations[Try] = new MetaOperationsSyncInterpreter(network.url, httpExchange)
-      // override def transact(signer: SigningKey): TransactionOperations[Try] =
-      //   new TransactionOperationsSyncInterpreter(network.url, httpExchange, signer, network.id, account)
+      override def transact(source: AccountId, transaction: Transaction): Try[TransactionResponse] =
+      new TransactionOperationsSyncInterpreter(network.url, httpExchange, source, account).transact(transaction)
     }
   }
 
@@ -56,8 +57,8 @@ object Horizon {
       override def account: AccountOperations[Future] = new AccountOperationsAsyncInterpreter(network.url, httpExchange)
       override def friendbot: FriendBotOperations[Future] = new FriendBotOperationsAsyncInterpreter(network.url, httpExchange)
       override def meta: MetaOperations[Future] = new MetaOperationsAsyncInterpreter(network.url, httpExchange)
-      // override def transact(signer: SigningKey): TransactionOperations[Future] =
-      //  new TransactionOperationsAsyncInterpreter(network.url, httpExchange, signer, network.id, account)
+      override def transact(source: AccountId, transaction: Transaction): Future[TransactionResponse] =
+        new TransactionOperationsAsyncInterpreter(network.url, httpExchange, source, account).transact(transaction)
     }
   }
 }
@@ -66,5 +67,5 @@ sealed trait Horizon[F[_]] {
   def account: AccountOperations[F]
   def friendbot: FriendBotOperations[F]
   def meta: MetaOperations[F]
-  // def transact(signer: SigningKey): TransactionOperations[F]
+  def transact(source: AccountId, transaction: Transaction): F[TransactionResponse]
 }

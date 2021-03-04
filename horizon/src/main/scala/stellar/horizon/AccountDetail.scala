@@ -19,5 +19,7 @@ case class AccountDetail(
   balances: List[Balance],
   signers: List[Signer],
   data: Map[String, ByteString]
-)
+) {
+  def nextSequence: Long = sequence + 1
+}
 

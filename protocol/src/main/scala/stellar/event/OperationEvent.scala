@@ -9,12 +9,18 @@ sealed trait OperationEvent
 sealed trait CreateAccountOpEvent extends OperationEvent
 
 object CreateAccountOpEvent {
-  def decode(requested: Operation, result: OperationResult): CreateAccountOpEvent = {
+  def decode(
+    requested: Operation,
+    result: OperationResult,
+    source: MuxedAccount
+  ): CreateAccountOpEvent = {
     result.getDiscriminant match {
       case OperationResultCode.opINNER =>
         result.getTr.getCreateAccountResult.getDiscriminant match {
-          case CREATE_ACCOUNT_SUCCESS =>
-            AccountCreated.decode(requested.getBody.getCreateAccountOp, requested.getSourceAccount)
+          case CREATE_ACCOUNT_SUCCESS => AccountCreated.decode(
+            op = requested.getBody.getCreateAccountOp,
+            source = Option(requested.getSourceAccount).getOrElse(source)
+          )
         }
     }
   }

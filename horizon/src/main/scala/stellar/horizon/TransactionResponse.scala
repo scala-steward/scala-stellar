@@ -25,19 +25,20 @@ object TransactionResponse {
     val envelope: TransactionEnvelope = TransactionEnvelope.decode(ByteString.decodeBase64(envelopeXdr))
     val feeCharged: Amount = Lumen.stroops(result.getFeeCharged.getInt64)
     val operationEvents: List[OperationEvent] = {
-      val operationsRequested = (envelope.getDiscriminant match {
+      val (sourceAccount, operationsRequested) = envelope.getDiscriminant match {
         // case EnvelopeType.ENVELOPE_TYPE_TX_V0 => envelope.getV0.getTx.getOperations
-        case EnvelopeType.ENVELOPE_TYPE_TX => envelope.getV1.getTx.getOperations
+        case EnvelopeType.ENVELOPE_TYPE_TX =>
+          (envelope.getV1.getTx.getSourceAccount, envelope.getV1.getTx.getOperations.toList)
         // case EnvelopeType.ENVELOPE_TYPE_TX_FEE_BUMP => envelope.getFeeBump.getTx.getInnerTx.getV1.getTx.getOperations
         case default => throw new IllegalStateException(s"Unexpected envelope type: $default")
-      }).toList
+      }
 
       val rawResults = result.getResult.getResults.toList
 
       operationsRequested.zip(rawResults).map {
         case (requested, result) =>
           requested.getBody.getDiscriminant match {
-            case CREATE_ACCOUNT => CreateAccountOpEvent.decode(requested, result)
+            case CREATE_ACCOUNT => CreateAccountOpEvent.decode(requested, result, sourceAccount)
             case default => throw new IllegalStateException(s"Unexpected operation type: $default")
           }
       }

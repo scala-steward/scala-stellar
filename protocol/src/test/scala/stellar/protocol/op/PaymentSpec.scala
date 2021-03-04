@@ -11,10 +11,12 @@ class PaymentSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
 }
 
 object Payments {
+/*
   val genPayment: Gen[Payment] = for {
     sender <- Gen.option(genAddress)
     recipient <- genAddress
     amount <- genAmount
   } yield Payment(sender, recipient, amount)
   implicit val arbPayment: Arbitrary[Payment] = Arbitrary(genPayment)
+*/
 }
