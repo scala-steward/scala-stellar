@@ -36,8 +36,5 @@ The AccountId is the public-facing dual of the Seed and is how accounts are addr
 val accountId = AccountId("GAF364EFVYYKK75ICJZL57HVG37PFCVRNWYRWPLXGJ2MYT622EQJ3RRR")
 
 // A random account id
-val accountId = AccountId.random
-
-// The public account id for a Seed 
 val accountId = Seed.random.accountId
 ```

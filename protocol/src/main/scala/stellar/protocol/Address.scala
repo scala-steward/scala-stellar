@@ -18,4 +18,10 @@ object Address {
     require(address.headOption.contains('G'))
     Address(AccountId(address))
   }
+
+  def decode(xdr: MuxedAccount): Address = {
+    xdr.getDiscriminant match {
+      case CryptoKeyType.KEY_TYPE_ED25519 => Address(AccountId.decode(xdr))
+    }
+  }
 }

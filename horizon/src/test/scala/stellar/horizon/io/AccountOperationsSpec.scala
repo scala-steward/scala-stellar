@@ -7,7 +7,7 @@ import org.specs2.mutable.Specification
 import stellar.horizon.io.HttpOperations.NotFound
 import stellar.horizon.json.AccountDetails
 import stellar.horizon.{AccountDetail, Horizon, Network}
-import stellar.protocol.{AccountId, NetworkId}
+import stellar.protocol.{AccountId, NetworkId, Seed}
 
 import scala.util.Success
 
@@ -45,7 +45,7 @@ class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification wi
         network,
         createHttpExchange = _ => fakeHttpExchange)
 
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       horizon.account.detail(accountId) must beAFailedTry.like { _ must haveClass[NotFound] }
 
       fakeHttpExchange.calls must beLike { case Seq(FakeHttpOperations.Invoke(r)) =>
@@ -80,7 +80,7 @@ class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification wi
         network,
         createHttpExchange = (_, _) => fakeHttpExchange)
 
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       horizon.account.detail(accountId) must throwA[NotFound].await
 
       fakeHttpExchange.calls must beLike { case Seq(FakeHttpOperations.Invoke(r)) =>

@@ -81,15 +81,13 @@ object AccountId {
 
   def apply(accountId: String): AccountId = AccountId(Key.decodeFromString(accountId))
 
-  // TODO - this is not a very useful method. Prefer the longhand.
-  def random: AccountId = Seed.random.accountId
+//  def decode(xdr: AccountID): AccountId = decode(xdr.getAccountID)
 
   def decode(xdr: PublicKey): AccountId = AccountId(new ByteString(xdr.getEd25519.getUint256))
 
   def decode(xdr: MuxedAccount): AccountId = xdr.getDiscriminant match {
     case CryptoKeyType.KEY_TYPE_ED25519 => AccountId(new ByteString(xdr.getEd25519.getUint256))
     // case CryptoKeyType.KEY_TYPE_MUXED_ED25519 => AccountId(new ByteString(xdr.getMed25519.getEd25519.getUint256))
-    // case default => throw new IllegalStateException(s"Unexpected crypto key type: $default")
   }
 }
 

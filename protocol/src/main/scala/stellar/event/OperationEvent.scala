@@ -1,19 +1,18 @@
 package stellar.event
 
 import org.stellar.xdr.CreateAccountResultCode.CREATE_ACCOUNT_SUCCESS
-import org.stellar.xdr._
-import stellar.protocol.AccountId
+import org.stellar.xdr.PaymentResultCode.PAYMENT_SUCCESS
+import org.stellar.xdr.{MuxedAccount, Operation, OperationResult, OperationResultCode}
 
 sealed trait OperationEvent
 
-sealed trait CreateAccountOpEvent extends OperationEvent
-
-object CreateAccountOpEvent {
+trait CreateAccountEvent extends OperationEvent
+object CreateAccountEvent {
   def decode(
     requested: Operation,
     result: OperationResult,
     source: MuxedAccount
-  ): CreateAccountOpEvent = {
+  ): CreateAccountEvent = {
     result.getDiscriminant match {
       case OperationResultCode.opINNER =>
         result.getTr.getCreateAccountResult.getDiscriminant match {
@@ -26,24 +25,21 @@ object CreateAccountOpEvent {
   }
 }
 
-
-/**
- * Account was created.
- */
-case class AccountCreated(
-  accountId: AccountId,
-  startingBalance: Long,
-  fundingAccountId: AccountId
-) extends CreateAccountOpEvent
-
-object AccountCreated {
-
-  def decode(op: CreateAccountOp, source: MuxedAccount): AccountCreated = {
-    AccountCreated(
-      accountId = AccountId.decode(op.getDestination.getAccountID),
-      startingBalance = op.getStartingBalance.getInt64,
-      fundingAccountId = AccountId.decode(source)
-    )
+trait PaymentEvent extends OperationEvent
+object PaymentEvent {
+  def decode(
+    requested: Operation,
+    result: OperationResult,
+    source: MuxedAccount
+  ): PaymentEvent = {
+    result.getDiscriminant match {
+      case OperationResultCode.opINNER =>
+        result.getTr.getPaymentResult.getDiscriminant match {
+          case PAYMENT_SUCCESS => PaymentMade.decode(
+            op = requested.getBody.getPaymentOp,
+            source = Option(requested.getSourceAccount).getOrElse(source)
+          )
+        }
+    }
   }
 }
-

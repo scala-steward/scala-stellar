@@ -2,9 +2,9 @@ package stellar.horizon
 
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import stellar.event.AccountCreated
+import stellar.event.{AccountCreated, PaymentMade}
 import stellar.horizon.io.HttpOperations.NotFound
-import stellar.protocol.op.CreateAccount
+import stellar.protocol.op.{CreateAccount, Pay}
 import stellar.protocol.{AccountId, Lumen, Seed, Transaction}
 
 import scala.concurrent.duration._
@@ -28,7 +28,7 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
 
     "be able to create a new account from a faucet (friendbot), if one is available" >> {
       val horizon = Horizon.async(Horizon.Networks.Test)
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       val response = horizon.friendbot.create(accountId)
       response must beLike[TransactionResponse] { res =>
         res.operationEvents mustEqual List(
@@ -39,12 +39,12 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
           )
         )
         res.feeCharged.units must beGreaterThanOrEqualTo(100L)
-      }.await(0, 10.seconds)
+      }.await(0, 30.seconds)
     }
 
     "fail to create a new account from a faucet (friendbot), if none is available" >> {
       val horizon = Horizon.async(Horizon.Networks.Main)
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       val response = horizon.friendbot.create(accountId)
       response must throwA[NotFound].await(0, 10.seconds)
     }
@@ -87,33 +87,38 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
       }.await(0, 10.seconds)
     }
 
-
-    // TODO - Pay with a specified source and sequence number.
-    // TODO - maintain a local sequence number?
-
     "be able to transact a payment" >> {
-      /*
       val horizon = Horizon.async(Horizon.Networks.Test)
-
-      // TODO (jem) - Test account creation should be performed once up-front.
       val from = Seed.random
       val to = Seed.random
+      Await.ready(Future.sequence(List(
+        horizon.friendbot.create(from.accountId),
+        horizon.friendbot.create(to.accountId)
+      )), 1.minute)
+      val sourceAccountDetails = Await.result(horizon.account.detail(from.accountId), 10.seconds)
 
-      val createFrom = horizon.friendbot.create(from.accountId)
-      val createTo = horizon.friendbot.create(to.accountId)
-      Await.ready(createFrom.flatMap(_ => createTo), 1.minute)
+      val transaction = Transaction(
+        networkId = Horizon.Networks.Test.id,
+        source = from.accountId,
+        sequence = sourceAccountDetails.nextSequence,
+        operations = List(
+          Pay(recipient = to.address, amount = Lumen(5))
+        ),
+        maxFee = 100,
+      ).sign(from)
 
-      val response = horizon.transact(from).pay(
-        sender = from.address,
-        recipient = to.address,
-        amount = Lumen(100)
-      )
+      val response = horizon.transact(from.accountId, transaction)
 
-      // TODO (jem) - Better assertions
-      response must beAnInstanceOf[TransactionResponse].await(0, 10.seconds)
-      */
-
-      pending
+      response must beLike[TransactionResponse] { res =>
+        res.operationEvents mustEqual List(
+          PaymentMade(
+            from = from.accountId,
+            to = to.address,
+            amount = Lumen(5)
+          )
+        )
+        res.feeCharged.units mustEqual 100L
+      }.await(0, 10.seconds)
     }
   }
 

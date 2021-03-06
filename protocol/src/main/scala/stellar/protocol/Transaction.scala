@@ -33,7 +33,7 @@ case class Transaction(
    * Encodes the underlying transaction without any signatures.
    * Further convert to base64 with `encodeUnsigned.base64()`
    */
-  def encodeUnsigned: ByteString = xdrEncode.encode()
+//  def encodeUnsigned: ByteString = xdrEncode.encode()
 
   /**
    * Encodes the transaction, enveloped with signatures.

@@ -4,7 +4,7 @@ import org.specs2.matcher.Matchers
 import org.specs2.mutable.Specification
 import stellar.event.AccountCreated
 import stellar.horizon.io.HttpOperations.NotFound
-import stellar.protocol.{AccountId, Lumen}
+import stellar.protocol.{AccountId, Lumen, Seed}
 
 import scala.util.Try
 
@@ -28,7 +28,7 @@ class BlockingJourneySpec extends Specification with Matchers {
 
     "be able to create a new account from a faucet (friendbot), if one is available" >> {
       val horizon = Horizon.sync(Horizon.Networks.Test)
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       val response = horizon.friendbot.create(accountId)
       response must beSuccessfulTry[TransactionResponse].like { res =>
         res.operationEvents mustEqual List(
@@ -44,7 +44,7 @@ class BlockingJourneySpec extends Specification with Matchers {
 
     "fail to create a new account from a faucet (friendbot), if none is available" >> {
       val horizon = Horizon.sync(Horizon.Networks.Main)
-      val accountId = AccountId.random
+      val accountId = Seed.random.accountId
       val response = horizon.friendbot.create(accountId)
       response must beFailedTry[TransactionResponse].like { _ must beAnInstanceOf[NotFound] }
     }

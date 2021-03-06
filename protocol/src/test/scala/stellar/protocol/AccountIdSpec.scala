@@ -20,6 +20,6 @@ class AccountIdSpec extends Specification with ScalaCheck with XdrSerdeMatchers 
 }
 
 object AccountIds {
-  val genAccountId: Gen[AccountId] = Gen.const(() => AccountId.random).map(_.apply())
+  val genAccountId: Gen[AccountId] = Gen.const(() => Seed.random.accountId).map(_.apply())
   implicit val arbAccountId: Arbitrary[AccountId] = Arbitrary(genAccountId)
 }
