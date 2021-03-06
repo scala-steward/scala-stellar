@@ -83,7 +83,7 @@ class AsyncJourneySpec(implicit ee: ExecutionEnv) extends Specification {
             fundingAccountId = from.accountId
           )
         )
-        res.feeCharged.units must beGreaterThanOrEqualTo(100L)
+        res.feeCharged.units mustEqual 100L
       }.await(0, 10.seconds)
     }
 
