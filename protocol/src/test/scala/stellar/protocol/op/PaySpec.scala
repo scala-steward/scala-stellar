@@ -1,10 +1,9 @@
 package stellar.protocol.op
 
-import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import stellar.protocol._
 
-class PaymentSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
+class PaySpec extends Specification {
 
   "a payment" should {
     "encode when sending lumens to a standard address" >> {
@@ -43,15 +42,4 @@ class PaymentSpec extends Specification with ScalaCheck with XdrSerdeMatchers {
           "n2eAQSyviykWb19qbffUIReEPF3J4herwAAAAFCVEMAAAAAAK7BVdqr97z+fZ4BBLK+LKRZvX2pt99QhF4Q8XcniF6vAAAAAAAAAio=")
     }
   }
-}
-
-object Payments {
-/*
-  val genPayment: Gen[Payment] = for {
-    sender <- Gen.option(genAddress)
-    recipient <- genAddress
-    amount <- genAmount
-  } yield Payment(sender, recipient, amount)
-  implicit val arbPayment: Arbitrary[Payment] = Arbitrary(genPayment)
-*/
 }
