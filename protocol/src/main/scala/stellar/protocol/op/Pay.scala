@@ -3,7 +3,7 @@ package stellar.protocol.op
 import org.stellar.xdr
 import org.stellar.xdr.Operation.OperationBody
 import org.stellar.xdr.{Int64, OperationType, PaymentOp}
-import stellar.protocol.{AccountId, Address, Amount}
+import stellar.protocol.{Address, Amount}
 
 /**
  * A payment operation.

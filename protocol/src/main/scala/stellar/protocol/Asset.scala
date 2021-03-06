@@ -3,7 +3,8 @@ package stellar.protocol
 import java.nio.charset.StandardCharsets
 
 import org.stellar.xdr
-import org.stellar.xdr.AssetType
+import org.stellar.xdr.Asset.{AssetAlphaNum12, AssetAlphaNum4}
+import org.stellar.xdr.{AssetCode12, AssetCode4, AssetType}
 
 sealed trait Asset {
   val code: String
@@ -52,9 +53,6 @@ case object Lumen extends Asset {
 case class Token(code: String, issuer: AccountId) extends Asset {
   require(code.length >= 1 && code.length <= 12)
 
-  override def xdrEncode: xdr.Asset = ???
-
-/* // Good, but untested
   private val isCompact = code.length <= 4
   override def xdrEncode: xdr.Asset = {
     val codeBytes = code.getBytes(StandardCharsets.UTF_8)
@@ -70,6 +68,5 @@ case class Token(code: String, issuer: AccountId) extends Asset {
         .build())
       .build()
   }
-*/
 
 }
