@@ -1,5 +1,7 @@
 package stellar.horizon
 
+import java.util.concurrent.TimeUnit
+
 import okhttp3.{HttpUrl, OkHttpClient}
 import stellar.horizon.io._
 import stellar.protocol.{AccountId, Key, NetworkId, SigningKey, Transaction}
@@ -10,13 +12,19 @@ import scala.util.Try
 
 object Horizon {
 
+  private val DefaultOkHttpClient = new OkHttpClient.Builder()
+    .connectTimeout(10, TimeUnit.SECONDS)
+    .writeTimeout(10, TimeUnit.SECONDS)
+    .readTimeout(1, TimeUnit.MINUTES)
+    .build()
+
   object Networks {
-    val Main = Network(
+    val Main: Network = Network(
       // TODO - these network ids are not specific to Horizon
       NetworkId("Public Global Stellar Network ; September 2015"),
       HttpUrl.parse("https://horizon.stellar.org/")
     )
-    val Test = Network(
+    val Test: Network = Network(
       NetworkId("Test SDF Network ; September 2015"),
       HttpUrl.parse("https://horizon-testnet.stellar.org/")
     )
@@ -24,7 +32,7 @@ object Horizon {
 
   def sync(
     network: Network = Networks.Main,
-    httpClient: OkHttpClient = new OkHttpClient(),
+    httpClient: OkHttpClient = DefaultOkHttpClient,
     createHttpExchange: OkHttpClient => HttpOperations[Try] = { httpClient =>
       new HttpOperationsSyncInterpreter(
         exchange = HttpOperationsSyncInterpreter.exchange(httpClient, _)
@@ -45,7 +53,7 @@ object Horizon {
 
   def async(
     network: Network = Networks.Main,
-    httpClient: OkHttpClient = new OkHttpClient(),
+    httpClient: OkHttpClient = DefaultOkHttpClient,
     createHttpExchange: (OkHttpClient, ExecutionContext) => HttpOperations[Future] = { (httpClient, ec) =>
       new HttpOperationsAsyncInterpreter(
         exchange = HttpOperationsAsyncInterpreter.exchange(httpClient, _)(ec)
