@@ -39,9 +39,11 @@ case class PaymentFailed(
 object PaymentFailed {
   sealed trait EnumVal
   case object InsufficientFunds extends EnumVal
+  case object RecipientDoesNotExist extends EnumVal
 
   private val failureTypes = Map(
-    PaymentResultCode.PAYMENT_UNDERFUNDED -> InsufficientFunds
+    PaymentResultCode.PAYMENT_UNDERFUNDED -> InsufficientFunds,
+    PaymentResultCode.PAYMENT_NO_DESTINATION -> RecipientDoesNotExist
   )
 
   def decode(
