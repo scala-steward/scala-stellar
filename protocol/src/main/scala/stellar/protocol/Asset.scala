@@ -2,6 +2,7 @@ package stellar.protocol
 
 import java.nio.charset.StandardCharsets
 
+import okio.ByteString
 import org.stellar.xdr
 import org.stellar.xdr.Asset.{AssetAlphaNum12, AssetAlphaNum4}
 import org.stellar.xdr.{AssetCode12, AssetCode4, AssetType}
@@ -51,19 +52,21 @@ case object Lumen extends Asset {
  * An account-defined custom asset.
  */
 case class Token(code: String, issuer: AccountId) extends Asset {
-  require(code.length >= 1 && code.length <= 12)
+  private val codeBytes = new ByteString(code.getBytes(StandardCharsets.UTF_8))
+  private val size = codeBytes.size()
+  private val isCompact = size <= 4
+  require(size >= 1 && size <= 12)
 
-  private val isCompact = code.length <= 4
   override def xdrEncode: xdr.Asset = {
     val codeBytes = code.getBytes(StandardCharsets.UTF_8)
     new xdr.Asset.Builder()
       .discriminant(if (isCompact) AssetType.ASSET_TYPE_CREDIT_ALPHANUM4 else AssetType.ASSET_TYPE_CREDIT_ALPHANUM12)
       .alphaNum4(if (isCompact) new AssetAlphaNum4.Builder()
-        .assetCode(new AssetCode4(codeBytes))
+        .assetCode(new AssetCode4(codeBytes.padTo(4, 0)))
         .issuer(issuer.xdrEncode)
         .build() else null)
       .alphaNum12(if (isCompact) null else new AssetAlphaNum12.Builder()
-        .assetCode(new AssetCode12(codeBytes))
+        .assetCode(new AssetCode12(codeBytes.padTo(12, 0)))
         .issuer(issuer.xdrEncode)
         .build())
       .build()
