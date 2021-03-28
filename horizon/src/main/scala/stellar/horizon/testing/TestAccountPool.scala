@@ -3,7 +3,7 @@ package stellar.horizon.testing
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import com.typesafe.scalalogging.LazyLogging
-import stellar.horizon.Horizon
+import stellar.horizon.{Horizon, TransactionResponse}
 import stellar.protocol.op.{CreateAccount, MergeAccount}
 import stellar.protocol.{Address, Lumen, Seed, Transaction}
 
@@ -17,11 +17,14 @@ class TestAccountPool(
   private val seeds: List[Seed],
   private val friendbotAddress: Address
 ) extends LazyLogging {
+
+
   require(seeds.nonEmpty && seeds.size <= 100,
     s"Can only create between 1 and 100 test accounts (provided $seeds.size)")
 
   private val free = new ConcurrentLinkedQueue[Seed]()
   private val borrowed = new ConcurrentLinkedQueue[Seed]()
+  private val cleanUpOperations = new ConcurrentLinkedQueue[() => Future[TransactionResponse]]()
   seeds.foreach(free.add)
 
   /** Get a unique seed and ensure that it is merged on pool close */
@@ -39,28 +42,37 @@ class TestAccountPool(
 
   def size: Int = free.size() + borrowed.size()
 
+  /** Add an operation that will clean up one or more accounts in preparation for closing the pool */
+  def addCleanUpStep(step: () => Future[TransactionResponse]): Unit = cleanUpOperations.add(step)
+
   def close()(implicit ec: ExecutionContext): Future[Unit] = {
     if (free.isEmpty && borrowed.isEmpty) Future(())
     else {
       val horizon = Horizon.async(Horizon.Networks.Test)
       val seeds = List.from(free.iterator().asScala) ++ List.from(borrowed.iterator().asScala)
       val closeBatches = seeds.grouped(20)
-      Future.sequence(closeBatches.zipWithIndex.map { case (batch, i) =>
-        for {
-          _ <- Future { Thread.sleep(i * 50L) } // To avoid http outbound starvation on CI servers
-          _ = logger.info(s"Closing ${batch.size} test accounts.")
-          sourceAccountResponse <- horizon.account.detail(batch.head.accountId)
-          mergeAllResponse <- horizon.transact(Transaction(
-            networkId = horizon.networkId,
-            source = batch.head.accountId,
-            sequence = sourceAccountResponse.nextSequence,
-            operations = batch.map(seed =>
-              MergeAccount(destination = friendbotAddress, source = Some(seed.address))
-            ),
-            maxFee = batch.size * 100
-          ).sign(batch: _*))
-        } yield mergeAllResponse
-      }).map(_ => ())
+      for {
+        _ <- Future.sequence(cleanUpOperations.iterator().asScala.map(_.apply()))
+        _ <- Future.sequence(closeBatches.zipWithIndex.map {
+          case (batch, i) =>
+            for {
+              _ <- Future {
+                Thread.sleep(i * 50L)
+              } // To avoid http outbound starvation on CI servers
+              _ = logger.info(s"Closing ${batch.size} test accounts.")
+              sourceAccountResponse <- horizon.account.detail(batch.head.accountId)
+              mergeAllResponse <- horizon.transact(Transaction(
+                networkId = horizon.networkId,
+                source = batch.head.accountId,
+                sequence = sourceAccountResponse.nextSequence,
+                operations = batch.map(seed =>
+                  MergeAccount(destination = friendbotAddress, source = Some(seed.address))
+                ),
+                maxFee = batch.size * 100
+              ).sign(batch: _*))
+            } yield mergeAllResponse
+        })
+      } yield ()
     }
   }
 }

@@ -68,6 +68,7 @@ object MergeAccountEvent {
             destination = requested.getBody.getDestination,
             amount = result.getTr.getAccountMergeResult.getSourceAccountBalance
           )
+//          case AccountMergeResultCode.ACCOUNT_MERGE_HAS_SUB_ENTRIES => ???
         }
     }
   }
@@ -83,6 +84,10 @@ object TrustChangeEvent {
     result.getDiscriminant match {
       case OperationResultCode.opINNER =>
         result.getTr.getChangeTrustResult.getDiscriminant match {
+          case ChangeTrustResultCode.CHANGE_TRUST_SUCCESS => TrustChanged.decode(
+            op = requested.getBody.getChangeTrustOp,
+            source = Option(requested.getSourceAccount).getOrElse(source)
+          )
           case changeTrustResultCode => TrustChangeFailed.decode(
             op = requested.getBody.getChangeTrustOp,
             source = Option(requested.getSourceAccount).getOrElse(source),
