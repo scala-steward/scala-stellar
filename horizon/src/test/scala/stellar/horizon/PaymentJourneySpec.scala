@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 import stellar.event.{OperationEvent, PaymentFailed}
-import stellar.event.PaymentFailed.{InsufficientFunds, RecipientDoesNotExist}
+import stellar.event.PaymentFailed.{InsufficientFunds, OverTrustLimit, RecipientDoesNotExist}
 import stellar.horizon.ValidationResult.{SourceAccountDoesNotExist, Valid}
 import stellar.horizon.testing.TestAccountPool
 import stellar.protocol.op.{Pay, TrustAsset}
@@ -79,8 +79,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
 
     "fail when the token funds are insufficient" >> {
       val (from, to) = testAccountPool.borrowPair
-//      val asset = Token("こうぎら", to.accountId)
-      val asset = Token("KOUGIRAz", to.accountId)
+      val asset = Token("KOUGIRA", to.accountId)
       val response = for {
         _ <- horizon.transact(from, List(TrustAsset(asset, 100L)))
         _ <- horizon.transact(to, List(Pay(from.address, Amount(asset, 42L))))
@@ -102,7 +101,29 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
       }.await(0, 30.seconds)
     }
 
-    "fail when the recipient would go over their limit" >> pending("support for trustline creation")
+    "fail when the recipient would go over their limit" >> {
+      val (to, from) = testAccountPool.borrowPair
+      val asset = Token("kaimono", from.accountId)
+      val response = for {
+        _ <- horizon.transact(to, List(TrustAsset(asset, 100L)))
+        r <- horizon.transact(from, List(Pay(to.address, Amount(asset, 101L))))
+      } yield r
+      testAccountPool.clearTrustBeforeClosing(to, asset)
+      response must beLike[TransactionResponse] { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          PaymentFailed(
+            source = from.address,
+            to = to.address,
+            amount = Amount(asset, 101L),
+            failure = OverTrustLimit
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }.await(0, 30.seconds)
+    }
+
     "fail when the asset is not trusted by the sender" >> pending("support for trustline creation")
     "fail when the asset is not trusted by the recipient" >> pending("support for trustline creation")
     "fail when the sender is not authorised to send this asset" >> pending("support for trustline creation")

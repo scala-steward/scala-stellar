@@ -53,6 +53,8 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
     "fail when the lumen balance minus the lumen selling liabilities is insufficient to cover a new trustline entry" >>
       pending("trading")
 
+    "fail when the asset code is not alphanumeric" >> pending("こうぎら")
+
     "otherwise succeed" >> {
       val (trustee, trustor) = testAccountPool.borrowPair
       val asset = Token("BTC", trustee.accountId)
