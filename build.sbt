@@ -48,8 +48,8 @@ val logging = List(
   "org.slf4j" % "slf4j-simple" % "2.0.0-alpha1" % Test
 )
 val specs2 = List(
-  "org.specs2" %% "specs2-core" % "4.10.6" % "test",
-  "org.specs2" %% "specs2-scalacheck" % "4.10.6" % "test",
+  "org.specs2" %% "specs2-core" % "4.11.0" % "test",
+  "org.specs2" %% "specs2-scalacheck" % "4.11.0" % "test",
 )
 
 def coverage(min: Int) = List(
