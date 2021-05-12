@@ -3,7 +3,7 @@ package stellar.horizon
 import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import stellar.event.PaymentFailed.{InsufficientFunds, MissingTrustLine, OverTrustLimit, RecipientDoesNotExist}
+import stellar.event.PaymentFailed.{InsufficientFunds, InvalidAmount, MissingTrustLine, OverTrustLimit, RecipientDoesNotExist}
 import stellar.event.{OperationEvent, PaymentFailed}
 import stellar.horizon.ValidationResult.{SourceAccountDoesNotExist, Valid}
 import stellar.horizon.testing.TestAccountPool
@@ -150,7 +150,24 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
     "fail when the asset is not trusted by the recipient" >> pending("support for trustline creation")
     "fail when the sender is not authorised to send this asset" >> pending("support for trustline creation")
     "fail when the recipient is not authorised to trust this asset" >> pending("support for trustline creation")
-    "fail when the amount is zero" >> pending("TODO")
+
+    "fail when the amount is zero" >> {
+      val (from, to) = testAccountPool.borrowPair
+      val response = horizon.transact(from, List(Pay(to.address, Lumen(0))))
+      response must beLike[TransactionResponse] { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          PaymentFailed(
+            source = from.address,
+            to = to.address,
+            amount = Lumen(0),
+            failure = InvalidAmount
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }.await(0, 10.seconds)
+    }
   }
 
   // Close the accounts and return their funds back to friendbot

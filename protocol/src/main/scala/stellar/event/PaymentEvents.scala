@@ -40,6 +40,8 @@ object PaymentFailed {
   sealed trait EnumVal
   /** The sender has insufficient funds to make this payment */
   case object InsufficientFunds extends EnumVal
+  /** The amount was zero or negative */
+  case object InvalidAmount extends EnumVal
   /** The sender or the recipient (or both) does not trust the asset being paid */
   case object MissingTrustLine extends EnumVal
   /** This payment would put the recipient's balance above the maximum trusted limit for this asset */
@@ -53,6 +55,7 @@ object PaymentFailed {
     PaymentResultCode.PAYMENT_NO_TRUST -> MissingTrustLine,
     PaymentResultCode.PAYMENT_SRC_NO_TRUST -> MissingTrustLine,
     PaymentResultCode.PAYMENT_UNDERFUNDED -> InsufficientFunds,
+    PaymentResultCode.PAYMENT_MALFORMED -> InvalidAmount
   )
 
   def decode(

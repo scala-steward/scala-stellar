@@ -1,6 +1,5 @@
+ThisBuild / homepage := Some(url("https://github.com/synesso/scala-stellar"))
 ThisBuild / scalaVersion := "2.13.5"
-
-homepage in ThisBuild := Some(url("https://github.com/synesso/scala-stellar"))
 
 lazy val `scala-stellar` = project
   .in(file("."))
@@ -53,6 +52,6 @@ val specs2 = List(
 )
 
 def coverage(min: Int) = List(
-  coverageMinimum := min,
+  coverageMinimumStmtTotal := min,
   coverageFailOnMinimum := true,
 )
