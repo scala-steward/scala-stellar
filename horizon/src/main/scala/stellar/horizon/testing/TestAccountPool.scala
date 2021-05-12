@@ -54,7 +54,10 @@ class TestAccountPool(
         .filterNot { balance => balance.units == 0L }
         .map { balance => Pay(Address(asset.issuer), balance) })
       // followed by the removal of trust
-      .flatMap(withdrawTxn => horizon.transact(seed, withdrawTxn.toList :+ TrustAsset.removeTrust(asset)))
+      .flatMap(withdrawTxn => {
+        val value = withdrawTxn.toList :+ TrustAsset.removeTrust(asset)
+        horizon.transact(seed, value)
+      })
   })
 
   def close()(implicit ec: ExecutionContext): Future[Unit] = {

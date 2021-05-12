@@ -3,12 +3,12 @@ package stellar.horizon
 import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
+import stellar.event.PaymentFailed.{InsufficientFunds, MissingTrustLine, OverTrustLimit, RecipientDoesNotExist}
 import stellar.event.{OperationEvent, PaymentFailed}
-import stellar.event.PaymentFailed.{InsufficientFunds, OverTrustLimit, RecipientDoesNotExist}
 import stellar.horizon.ValidationResult.{SourceAccountDoesNotExist, Valid}
 import stellar.horizon.testing.TestAccountPool
+import stellar.protocol._
 import stellar.protocol.op.{Pay, TrustAsset}
-import stellar.protocol.{Amount, Lumen, Seed, Token, Transaction}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -124,7 +124,29 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
       }.await(0, 30.seconds)
     }
 
-    "fail when the asset is not trusted by the sender" >> pending("support for trustline creation")
+    "fail when the asset is not trusted by the sender" >> {
+      val (to, from) = testAccountPool.borrowPair
+      val asset = Token("tanuki", testAccountPool.borrow.accountId)
+      val response = for {
+        x <- horizon.transact(to, List(TrustAsset(asset, 100L)))
+        r <- horizon.transact(from, List(Pay(to.address, Amount(asset, 7))))
+      } yield (r, x)
+      testAccountPool.clearTrustBeforeClosing(to, asset)
+      response.map(_._1) must beLike[TransactionResponse] { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          PaymentFailed(
+            source = from.address,
+            to = to.address,
+            amount = Amount(asset, 7L),
+            failure = MissingTrustLine
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }.await(0, 30.seconds)
+    }
+
     "fail when the asset is not trusted by the recipient" >> pending("support for trustline creation")
     "fail when the sender is not authorised to send this asset" >> pending("support for trustline creation")
     "fail when the recipient is not authorised to trust this asset" >> pending("support for trustline creation")

@@ -3,7 +3,7 @@ package stellar.event
 import org.stellar.xdr.CreateAccountResultCode.CREATE_ACCOUNT_SUCCESS
 import org.stellar.xdr.PaymentResultCode.{PAYMENT_SUCCESS, PAYMENT_UNDERFUNDED}
 import org.stellar.xdr.{AccountMergeResultCode, ChangeTrustResultCode, MuxedAccount, Operation, OperationResult, OperationResultCode}
-import stellar.protocol.Address
+import stellar.protocol.{AccountId, Address}
 
 sealed trait OperationEvent {
   val source: Address

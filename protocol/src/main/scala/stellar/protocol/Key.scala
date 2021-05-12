@@ -109,7 +109,7 @@ case class Seed(hash: ByteString) extends SigningKey {
   override def sign(payload: ByteString): Signature = {
     val sig = new EdDSAEngine(MessageDigest.getInstance("SHA-512"))
     sig.initSign(sk)
-    sig.update(payload.toByteArray())
+    sig.update(payload.toByteArray)
     Signature(new ByteString(sig.sign), accountId.hint)
   }
 }
