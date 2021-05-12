@@ -28,13 +28,17 @@ class TestAccountPool(
 
   /** Get a unique seed and ensure that it is merged on pool close */
   def borrow: Seed = {
+    if (free.isEmpty) throw new IllegalStateException("The pool is empty")
     val s = free.remove()
     borrowed.add(s)
     s
   }
 
   /** Get a unique seed and let the pool forget about it. It will not be merged on close. */
-  def take: Seed = free.remove()
+  def take: Seed = {
+    if (free.isEmpty) throw new IllegalStateException("The pool is empty")
+    free.remove()
+  }
 
   /** Borrow twice, for a sender and recipient */
   def borrowPair: (Seed, Seed) = (borrow, borrow)

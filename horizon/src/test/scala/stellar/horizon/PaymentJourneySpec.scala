@@ -16,7 +16,7 @@ import scala.concurrent.duration.DurationInt
 class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with LazyLogging {
 
   private val horizon = Horizon.async(Horizon.Networks.Test)
-  private lazy val testAccountPool = Await.result(TestAccountPool.create(15), 1.minute)
+  private lazy val testAccountPool = Await.result(TestAccountPool.create(20), 1.minute)
 
   "transacting a payment" should {
     "fail when the lumen funds are insufficient" >> {
@@ -147,7 +147,25 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
       }.await(0, 30.seconds)
     }
 
-    "fail when the asset is not trusted by the recipient" >> pending("support for trustline creation")
+    "fail when the asset is not trusted by the recipient" >> {
+      val (to, from) = testAccountPool.borrowPair
+      val asset = Token("buta", testAccountPool.borrow.accountId)
+      val response = horizon.transact(from, List(Pay(to.address, Amount(asset, 7))))
+      response must beLike[TransactionResponse] { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          PaymentFailed(
+            source = from.address,
+            to = to.address,
+            amount = Amount(asset, 7L),
+            failure = MissingTrustLine
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }.await(0, 30.seconds)
+    }
+
     "fail when the sender is not authorised to send this asset" >> pending("support for trustline creation")
     "fail when the recipient is not authorised to trust this asset" >> pending("support for trustline creation")
 
