@@ -43,6 +43,9 @@ class TestAccountPool(
   /** Borrow twice, for a sender and recipient */
   def borrowPair: (Seed, Seed) = (borrow, borrow)
 
+  /** Borrow thrice, for a sender and recipient and once more for good luck */
+  def borrowTriple: (Seed, Seed, Seed) = (borrow, borrow, borrow)
+
   def size: Int = free.size() + borrowed.size()
 
   /** Add an operation that will clean up one or more accounts in preparation for closing the pool */

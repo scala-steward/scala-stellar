@@ -148,8 +148,8 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
     }
 
     "fail when the asset is not trusted by the recipient" >> {
-      val (to, from) = testAccountPool.borrowPair
-      val asset = Token("buta", testAccountPool.borrow.accountId)
+      val (to, from, issuer) = testAccountPool.borrowTriple
+      val asset = Token("buta", issuer.accountId)
       val response = horizon.transact(from, List(Pay(to.address, Amount(asset, 7))))
       response must beLike[TransactionResponse] { res =>
         res.accepted must beFalse
@@ -166,7 +166,55 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
       }.await(0, 30.seconds)
     }
 
-    "fail when the sender is not authorised to send this asset" >> pending("support for trustline creation")
+    /** TODO: Build out the support for trustline modifications.
+     *
+     * These two tests seem to require the ability to issue SetTrustlineFlag operations.
+     * Is it the case that the flags are:
+     * 1. They can hold but not transaction
+     * 2. They can hold and make offers, but not payments
+     * 4. They can do anything but clawbacks are not possible *
+    
+    "fail when the sender is not authorised to send this asset" >> {
+      val (to, from, issuer) = testAccountPool.borrowTriple
+      val asset = Token("zou", issuer.accountId)
+
+      // issuer clears all trustline flags (1+2)
+      // to and from both trust
+      // then try to send from to to.
+
+      val response = for {
+        sequence <- horizon.account.detail(issuer.accountId).map(_.nextSequence)
+        response <- horizon.transact(Transaction(
+          networkId = horizon.networkId,
+          source = issuer.accountId,
+          sequence = sequence,
+          operations = List(
+            TrustAsset(asset, 999, from.address.toOption),
+            TrustAsset(asset, 999, to.address.toOption),
+            Pay(from.address, Amount(asset, 500), issuer.address.toOption),
+            ConfigureTrustLine()
+          ),
+          maxFee = 999
+        ).sign(issuer))
+      } yield response
+      val response = horizon.transact(from, List(Pay(to.address, Amount(asset, 7))))
+      response must beLike[TransactionResponse] { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          PaymentFailed(
+            source = from.address,
+            to = to.address,
+            amount = Amount(asset, 7L),
+            failure = MissingTrustLine
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }.await(0, 30.seconds)
+    }
+
+    */
+
     "fail when the recipient is not authorised to trust this asset" >> pending("support for trustline creation")
 
     "fail when the amount is zero" >> {

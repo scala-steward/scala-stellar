@@ -51,11 +51,14 @@ object PaymentFailed {
 
   private val failureTypes = Map(
     PaymentResultCode.PAYMENT_LINE_FULL -> OverTrustLimit,
+    PaymentResultCode.PAYMENT_MALFORMED -> InvalidAmount,
+//    PaymentResultCode.PAYMENT_NOT_AUTHORIZED -> ???,
     PaymentResultCode.PAYMENT_NO_DESTINATION -> RecipientDoesNotExist,
+//    PaymentResultCode.PAYMENT_NO_ISSUER -> ???,
     PaymentResultCode.PAYMENT_NO_TRUST -> MissingTrustLine,
+//    PaymentResultCode.PAYMENT_SRC_NOT_AUTHORIZED -> ???,
     PaymentResultCode.PAYMENT_SRC_NO_TRUST -> MissingTrustLine,
     PaymentResultCode.PAYMENT_UNDERFUNDED -> InsufficientFunds,
-    PaymentResultCode.PAYMENT_MALFORMED -> InvalidAmount
   )
 
   def decode(
