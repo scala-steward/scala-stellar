@@ -15,7 +15,7 @@ import scala.concurrent.duration.DurationInt
 
 class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with LazyLogging {
 
-  private val horizon = Horizon.async(Horizon.Networks.Test)
+  private val horizon = Horizon.sync(Horizon.Networks.Test)
   private lazy val testAccountPool = Await.result(TestAccountPool.create(15), 1.minute)
 
   "trusting an asset" should {
@@ -37,7 +37,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         ).sign(trustor))
       } yield response
 
-      response must beLike[TransactionResponse] { res =>
+      response must beASuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beFalse
         res.operationEvents mustEqual List(
           TrustChangeFailed(
@@ -47,7 +47,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 10.seconds)
+      }
     }
 
     "fail when the lumen balance minus the lumen selling liabilities is insufficient to cover a new trustline entry" >>
@@ -73,7 +73,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
 
       testAccountPool.clearTrustBeforeClosing(trustor, asset)
 
-      response must beLike[TransactionResponse] { res =>
+      response must beASuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beTrue
         res.operationEvents mustEqual List(
           TrustChanged(
@@ -84,7 +84,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 10.seconds)
+      }
     }
   }
 
@@ -98,7 +98,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
       val asset = Token("KOUGIRA", trustee.accountId)
       val response = horizon.transact(trustor, List(TrustAsset(asset, 100_000_000L)))
         .flatMap(_ => horizon.transact(trustor, List(TrustAsset.removeTrust(asset))))
-      response must beLike[TransactionResponse] { res =>
+      response must beSuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beTrue
         res.operationEvents mustEqual List(
           TrustRemoved(
@@ -108,7 +108,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 30.seconds)
+      }
     }
 
     "fail when trust does not exist" >> pending("TODO")
