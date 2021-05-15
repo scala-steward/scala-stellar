@@ -38,7 +38,8 @@ lazy val horizon = project
       "org.json4s" %% "json4s-native" % "3.6.11",
     ),
     scalacOptions ++= List("-deprecation", "-feature"),
-    coverage(95)
+    coverage(95),
+    Test / parallelExecution := !scala.sys.env.get("PARALLEL_SPEC_EXECUTION").contains("false")
   )
 
 val logging = List(
