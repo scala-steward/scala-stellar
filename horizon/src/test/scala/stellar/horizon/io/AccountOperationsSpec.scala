@@ -9,6 +9,7 @@ import stellar.horizon.json.AccountDetails
 import stellar.horizon.{AccountDetail, Horizon, Network}
 import stellar.protocol.{AccountId, NetworkId, Seed}
 
+import scala.concurrent.duration.DurationInt
 import scala.util.Success
 
 class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification with ScalaCheck {
@@ -65,7 +66,7 @@ class AccountOperationsSpec(implicit env: ExecutionEnv) extends Specification wi
         network,
         createHttpExchange = (_, _) => fakeHttpExchange)
 
-      horizon.account.detail(accountDetail.id) must beEqualTo(accountDetail).await
+      horizon.account.detail(accountDetail.id) must beEqualTo(accountDetail).awaitFor(10.seconds)
 
       fakeHttpExchange.calls must beLike { case Seq(FakeHttpOperations.Invoke(r)) =>
         r.url().toString mustEqual s"http://localhost/accounts/${accountDetail.id.encodeToString}"

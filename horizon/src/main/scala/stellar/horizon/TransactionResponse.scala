@@ -3,7 +3,7 @@ package stellar.horizon
 import okio.ByteString
 import org.stellar.xdr.OperationType._
 import org.stellar.xdr._
-import stellar.event.{CreateAccountEvent, MergeAccountEvent, OperationEvent, PaymentEvent, TrustChangeEvent}
+import stellar.event.{CreateAccountEvent, ManageBuyOfferEvent, MergeAccountEvent, OperationEvent, PaymentEvent, TrustChangeEvent}
 import stellar.horizon.ValidationResult.{SourceAccountDoesNotExist, Valid}
 
 /** The result of submitting a transaction to a network */
@@ -66,6 +66,7 @@ object TransactionResponse {
             case ACCOUNT_MERGE => MergeAccountEvent.decode(requested, result, sourceAccount)
             case CHANGE_TRUST => TrustChangeEvent.decode(requested, result, sourceAccount)
             case CREATE_ACCOUNT => CreateAccountEvent.decode(requested, result, sourceAccount)
+            case MANAGE_BUY_OFFER => ManageBuyOfferEvent.decode(requested, result, sourceAccount)
             case PAYMENT => PaymentEvent.decode(requested, result, sourceAccount)
             // case default => throw new IllegalStateException(s"Unexpected operation type: $default")
           }

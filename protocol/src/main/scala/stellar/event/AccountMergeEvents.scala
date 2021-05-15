@@ -1,6 +1,6 @@
 package stellar.event
 
-import org.stellar.xdr.{Int64, MuxedAccount, PaymentOp}
+import org.stellar.xdr.{Int64, MuxedAccount}
 import stellar.protocol.Address
 
 /**

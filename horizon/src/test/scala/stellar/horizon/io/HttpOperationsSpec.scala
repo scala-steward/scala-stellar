@@ -52,7 +52,7 @@ class HttpOperationsSpec(implicit ec: ExecutionEnv) extends Specification {
     }
 
     "execute request/response" >> {
-      new HttpOperationsAsyncInterpreter(fakeExchange(_, response)).invoke(request) must beEqualTo(response).await
+      new HttpOperationsAsyncInterpreter(fakeExchange(_, response)).invoke(request) must beEqualTo(response).awaitFor(10.seconds)
     }
 
     "capture failures" >> {
@@ -60,7 +60,7 @@ class HttpOperationsSpec(implicit ec: ExecutionEnv) extends Specification {
       def fakeExchange(input: Request): Future[Response] = {
         Future.failed(error)
       }
-      new HttpOperationsAsyncInterpreter(fakeExchange).invoke(request) must throwA[Throwable](error).await
+      new HttpOperationsAsyncInterpreter(fakeExchange).invoke(request) must throwA[Throwable](error).awaitFor(10.seconds)
     }
 
     "handle server errors" >> {
@@ -68,7 +68,7 @@ class HttpOperationsSpec(implicit ec: ExecutionEnv) extends Specification {
       new HttpOperationsAsyncInterpreter(fakeExchange(_, serverErrorResponse))
         .handle(serverErrorResponse, Future("ok")) must throwA[ServerError].like { case ServerError(message) =>
         message mustEqual "broken"
-      }.await
+      }.awaitFor(10.seconds)
     }
   }
 }

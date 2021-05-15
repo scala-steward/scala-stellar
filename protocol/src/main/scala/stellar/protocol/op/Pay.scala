@@ -12,7 +12,7 @@ import stellar.protocol.{Address, Amount}
  *      details on this operation.
  * @param recipient the receiver of the funds
  * @param amount    the amount to be sent
- * @param source    the issuer of the funds. If absent, the source of the transaction with be the source of funds
+ * @param source    the issuer of the funds. If absent, the source of the transaction will be the source of funds
  */
 case class Pay(
   recipient: Address,

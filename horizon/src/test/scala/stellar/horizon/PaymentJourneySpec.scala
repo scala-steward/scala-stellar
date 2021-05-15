@@ -18,7 +18,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
   private val horizon = Horizon.async(Horizon.Networks.Test)
   private lazy val testAccountPool = Await.result(TestAccountPool.create(20), 1.minute)
 
-  "transacting a payment" should {
+  "transacting a single-asset payment" should {
     "fail when the lumen funds are insufficient" >> {
       val (from, to) = testAccountPool.borrowPair
       val response = horizon.transact(from, List(Pay(to.address, Lumen(11_000))))
@@ -85,7 +85,6 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         _ <- horizon.transact(to, List(Pay(from.address, Amount(asset, 42L))))
         r <- horizon.transact(from, List(Pay(to.address, Amount(asset, 43L))))
       } yield r
-      testAccountPool.clearTrustBeforeClosing(from, asset)
       response must beLike[TransactionResponse] { res =>
         res.accepted must beFalse
         res.operationEvents mustEqual List(
@@ -108,7 +107,6 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         _ <- horizon.transact(to, List(TrustAsset(asset, 100L)))
         r <- horizon.transact(from, List(Pay(to.address, Amount(asset, 101L))))
       } yield r
-      testAccountPool.clearTrustBeforeClosing(to, asset)
       response must beLike[TransactionResponse] { res =>
         res.accepted must beFalse
         res.operationEvents mustEqual List(
@@ -131,7 +129,6 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         x <- horizon.transact(to, List(TrustAsset(asset, 100L)))
         r <- horizon.transact(from, List(Pay(to.address, Amount(asset, 7))))
       } yield (r, x)
-      testAccountPool.clearTrustBeforeClosing(to, asset)
       response.map(_._1) must beLike[TransactionResponse] { res =>
         res.accepted must beFalse
         res.operationEvents mustEqual List(
@@ -234,6 +231,10 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         res.validationResult mustEqual Valid
       }.await(0, 10.seconds)
     }
+  }
+
+  "transacting a cross-asset payment" should {
+    "allow the sender to specify the exact sending amount" >> pending("requires trade placement")
   }
 
   // Close the accounts and return their funds back to friendbot

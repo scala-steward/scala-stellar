@@ -71,8 +71,6 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         ).sign(trustor))
       } yield response
 
-      testAccountPool.clearTrustBeforeClosing(trustor, asset)
-
       response must beASuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beTrue
         res.operationEvents mustEqual List(

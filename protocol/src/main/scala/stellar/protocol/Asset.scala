@@ -1,19 +1,20 @@
 package stellar.protocol
 
 import java.nio.charset.StandardCharsets
-
 import okio.ByteString
 import org.stellar.xdr
 import org.stellar.xdr.Asset.{AssetAlphaNum12, AssetAlphaNum4}
 import org.stellar.xdr.{AssetCode12, AssetCode4, AssetType}
+import stellar.protocol.Asset.BASE_UNITS_PER_WHOLE_UNIT
 
 sealed trait Asset {
   val code: String
-
+  val asToken: Option[Token] = None
   def xdrEncode: xdr.Asset
 }
 
 object Asset {
+  val BASE_UNITS_PER_WHOLE_UNIT = 10_000_000L
   def decode(x: xdr.Asset): Asset = {
     x.getDiscriminant match {
       case AssetType.ASSET_TYPE_NATIVE => Lumen
@@ -35,7 +36,7 @@ object Asset {
  * The network's native asset, XLM.
  */
 case object Lumen extends Asset {
-  val STROOPS_PER_LUMEN = 10_000_000L
+  val STROOPS_PER_LUMEN: Long = BASE_UNITS_PER_WHOLE_UNIT
 
   override val code: String = "XLM"
   def apply(lumen: Int): Amount = stroops(lumen * STROOPS_PER_LUMEN)
@@ -50,6 +51,7 @@ case object Lumen extends Asset {
  * An account-defined custom asset.
  */
 case class Token(code: String, issuer: AccountId) extends Asset {
+  override val asToken: Option[Token] = Some(this)
   private val codeBytes = new ByteString(code.getBytes(StandardCharsets.UTF_8))
   private val size = codeBytes.size()
   private val isCompact = size <= 4

@@ -1,9 +1,9 @@
 package stellar.horizon.testing
 
 import com.typesafe.scalalogging.LazyLogging
-import stellar.horizon.{Horizon, TransactionResponse}
+import stellar.horizon.{Balance, Horizon, Offer, TransactionResponse}
 import stellar.protocol._
-import stellar.protocol.op.{CreateAccount, MergeAccount, Pay, TrustAsset}
+import stellar.protocol.op._
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,13 +17,11 @@ class TestAccountPool(
   private val friendbotAddress: Address
 ) extends LazyLogging {
 
-
   require(seeds.nonEmpty && seeds.size <= 100,
     s"Can only create between 1 and 100 test accounts (provided $seeds.size)")
 
   private val free = new ConcurrentLinkedQueue[Seed]()
   private val borrowed = new ConcurrentLinkedQueue[Seed]()
-  private val cleanUpOperations = new ConcurrentLinkedQueue[() => Future[TransactionResponse]]()
   seeds.foreach(free.add)
 
   /** Get a unique seed and ensure that it is merged on pool close */
@@ -48,56 +46,44 @@ class TestAccountPool(
 
   def size: Int = free.size() + borrowed.size()
 
-  /** Add an operation that will clean up one or more accounts in preparation for closing the pool */
-  def addCleanUpStep(step: () => Future[TransactionResponse]): Unit = cleanUpOperations.add(step)
-
-  /** Add a remove trust operation on pool closure */
-  def clearTrustBeforeClosing(seed: Seed, asset: Token)(implicit ec: ExecutionContext): Unit = addCleanUpStep(() => {
-    logger.info(s"${seed.accountId.encodeToString} will no longer trust ${asset.fullCode}")
-    val horizon = Horizon.async(Horizon.Networks.Test)
-    horizon.account.detail(seed.accountId)
-      // an optional payment to clear the asset from the account
-      .map(_.balance(asset)
-        .filterNot { balance => balance.units == 0L }
-        .map { balance => Pay(Address(asset.issuer), balance) })
-      // followed by the removal of trust
-      .flatMap(withdrawTxn => {
-        val value = withdrawTxn.toList :+ TrustAsset.removeTrust(asset)
-        horizon.transact(seed, value)
-      })
-  })
-
-  def close()(implicit ec: ExecutionContext): Future[Unit] = {
-    if (free.isEmpty && borrowed.isEmpty) Future(())
+  def close()(implicit ee: ExecutionContext): Future[List[TransactionResponse]] = {
+    if (free.isEmpty && borrowed.isEmpty) Future(Nil)
     else {
       val horizon = Horizon.async(Horizon.Networks.Test)
-      val seeds = List.from(free.iterator().asScala) ++ List.from(borrowed.iterator().asScala)
-      val closeBatches = seeds.grouped(20)
-      logger.info(s"Executing ${cleanUpOperations.size()} clean up operation(s)")
-      for {
-        _ <- Future.sequence(cleanUpOperations.iterator().asScala.map(_.apply()))
-        _ <- Future.sequence(closeBatches.zipWithIndex.map {
-          case (batch, i) =>
-            for {
-              _ <- Future {
-                Thread.sleep(i * 50L)
-              } // To avoid http outbound starvation on CI servers
-              _ = logger.info(s"Closing ${batch.size} test accounts.")
-              sourceAccountResponse <- horizon.account.detail(batch.head.accountId)
-              mergeAllResponse <- horizon.transact(Transaction(
-                networkId = horizon.networkId,
-                source = batch.head.accountId,
-                sequence = sourceAccountResponse.nextSequence,
-                operations = batch.map(seed =>
-                  MergeAccount(destination = friendbotAddress, source = Some(seed.address))
-                ),
-                maxFee = batch.size * 100
-              ).sign(batch: _*))
-            } yield mergeAllResponse
-        })
-      } yield ()
+      val freeCleanUpOperations: Map[Seed, Future[List[Operation]]] = free.iterator().asScala
+        .map(seed => seed -> Future(List(
+          MergeAccount(destination = friendbotAddress, source = Some(seed.address)))
+        )).toMap
+
+      val usedCleanUpOperations: Map[Seed, Future[List[Operation]]] = borrowed.iterator().asScala.map { seed =>
+        val operations = for {
+          offers <- horizon.account.offers(seed.accountId)
+          cancelOfferOps = offers.map(cancelOfferOp)
+          balances <- horizon.account.detail(seed.accountId).map(_.balances)
+          burnBalances = balances.flatMap(closeBalanceOps)
+        } yield cancelOfferOps ++ burnBalances :+
+          MergeAccount(destination = friendbotAddress, source = Some(seed.address))
+        seed -> operations
+      }.toMap
+
+      val transactions = (usedCleanUpOperations ++ freeCleanUpOperations).map { case (seed, futureOps) =>
+        for {
+          ops <- futureOps
+          resp <- horizon.transact(seed, ops)
+        } yield resp
+      }.toList
+
+      Future.sequence(transactions)
     }
   }
+
+  private def cancelOfferOp(offer: Offer): CancelBid = CancelBid(offer.id, offer.selling, offer.buying)
+
+  private def closeBalanceOps(balance: Balance): List[Operation] =
+    balance.amount.asset.asToken.toList.flatMap(token => List(
+      Pay(Address(token.issuer), balance.amount),
+      TrustAsset.removeTrust(token)
+    ))
 }
 
 object TestAccountPool extends LazyLogging {
@@ -113,12 +99,12 @@ object TestAccountPool extends LazyLogging {
       sourceAccountResponse <- horizon.account.detail(first.accountId)
       startingBalance = sourceAccountResponse.balance(Lumen).map(_.units - fee).map(_ / quantity).get
       _ <- if (others.nonEmpty) horizon.transact(Transaction(
-          networkId = horizon.networkId,
-          source = first.accountId,
-          sequence = sourceAccountResponse.nextSequence,
-          operations = others.map(seed => CreateAccount(seed.accountId, startingBalance)),
-          maxFee = fee
-        ).sign(first)
+        networkId = horizon.networkId,
+        source = first.accountId,
+        sequence = sourceAccountResponse.nextSequence,
+        operations = others.map(seed => CreateAccount(seed.accountId, startingBalance)),
+        maxFee = fee
+      ).sign(first)
       ) else Future.unit
       pool = new TestAccountPool(first :: others, friendbotCreateResponse.operationEvents.head.source)
     } yield pool

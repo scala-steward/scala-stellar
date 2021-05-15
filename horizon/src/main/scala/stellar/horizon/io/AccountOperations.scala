@@ -3,9 +3,9 @@ package stellar.horizon.io
 import okhttp3.{HttpUrl, Request, Response}
 import org.json4s.native.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats}
-import stellar.horizon.AccountDetail
+import stellar.horizon.{AccountDetail, Offer}
 import stellar.horizon.io.HttpOperations.NotFound
-import stellar.horizon.json.AccountDetailReader
+import stellar.horizon.json.{AccountDetailReader, OfferReader}
 import stellar.protocol.AccountId
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,6 +25,24 @@ object AccountOperations {
     implicit val formats: Formats = DefaultFormats + AccountDetailReader
     parse(response.body().string()).extract[AccountDetail]
   }
+
+  def accountOffersRequest(horizonBaseUrl: HttpUrl, accountId: AccountId): Request = {
+    new Request.Builder()
+      .url(
+        horizonBaseUrl.newBuilder()
+          .addPathSegment("accounts")
+          .addPathSegment(accountId.encodeToString)
+          .addPathSegment("offers")
+          .build())
+      .build()
+  }
+
+  def responseToAccountOffers(response: Response): List[Offer] = {
+    implicit val formats: Formats = DefaultFormats + OfferReader
+    val doc = parse(response.body().string())
+    (doc \ "_embedded" \ "records").extract[List[Offer]]
+  }
+
 }
 
 /**
@@ -38,6 +56,11 @@ trait AccountOperations[F[_]] {
    * @return the details of the account
    */
   def detail(accountId: AccountId): F[AccountDetail]
+
+  /**
+   * Returns up to 200 offers active for the specified account.
+   */
+  def offers(accountId: AccountId): F[List[Offer]]
 }
 
 /**
@@ -58,6 +81,15 @@ class AccountOperationsSyncInterpreter(
     } yield result
   }
 
+  override def offers(accountId: AccountId): Try[List[Offer]] = {
+    val request = AccountOperations.accountOffersRequest(horizonBaseUrl, accountId)
+    for {
+      response <- httpExchange.invoke(request)
+      result <- httpExchange.handle(response,
+        Try(AccountOperations.responseToAccountOffers(response)),
+      )
+    } yield result
+  }
 }
 
 /**
@@ -74,6 +106,16 @@ class AccountOperationsAsyncInterpreter(
       response <- httpExchange.invoke(request)
       result <- httpExchange.handle(response,
         Future(AccountOperations.responseToAccountDetails(response))
+      )
+    } yield result
+  }
+
+  override def offers(accountId: AccountId): Future[List[Offer]] = {
+    val request = AccountOperations.accountOffersRequest(horizonBaseUrl, accountId)
+    for {
+      response <- httpExchange.invoke(request)
+      result <- httpExchange.handle(response,
+        Future(AccountOperations.responseToAccountOffers(response)),
       )
     } yield result
   }
