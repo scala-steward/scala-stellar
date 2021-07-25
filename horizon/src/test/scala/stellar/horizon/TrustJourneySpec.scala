@@ -123,23 +123,14 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
       }
     }
 
-    // TODO - horizon.transact() variant with extra signatures
-
     "fail when a balance remains" >> {
       val (trustee, trustor) = testAccountPool.borrowPair
       val asset = Token("KOUGIRA", trustee.accountId)
       val response = for {
-        fromAccountDetails <- horizon.account.detail(trustor.accountId)
-        _ <- horizon.transact(Transaction(
-          networkId = horizon.networkId,
-          source = trustor.accountId,
-          sequence = fromAccountDetails.nextSequence,
-          operations = List(
+        _ <- horizon.transact(trustor, List(
             TrustAsset(asset, 100_000_000L),
             Pay(trustor.address, Amount(asset, 5_000_000L), Some(trustee.address))
-          ),
-          maxFee = 200
-        ).sign(trustor, trustee))
+          ), Set(trustee))
         r <- horizon.transact(trustor, List(TrustAsset.removeTrust(asset)))
       } yield r
       response must beSuccessfulTry[TransactionResponse].like { res =>

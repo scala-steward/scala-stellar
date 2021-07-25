@@ -55,9 +55,13 @@ object Horizon {
       override def transact(transaction: Transaction): Try[TransactionResponse] =
         new TransactionOperationsSyncInterpreter(network.url, httpExchange).transact(transaction)
 
-      override def transact(seed: Seed, operations: List[Operation]): Try[TransactionResponse] = for {
+      override def transact(
+        seed: Seed,
+        operations: List[Operation],
+        otherSigners: Set[Seed]
+      ): Try[TransactionResponse] = for {
         sequence <- account.detail(seed.accountId).map(_.nextSequence)
-        response <- transact(simpleTransaction(networkId, seed, operations, sequence))
+        response <- transact(simpleTransaction(networkId, seed, operations, sequence, otherSigners))
       } yield response
     }
   }
@@ -85,21 +89,31 @@ object Horizon {
       override def transact(transaction: Transaction): Future[TransactionResponse] =
         new TransactionOperationsAsyncInterpreter(network.url, httpExchange).transact(transaction)
 
-      override def transact(seed: Seed, operations: List[Operation]): Future[TransactionResponse] = for {
+      override def transact(
+        seed: Seed,
+        operations: List[Operation],
+        otherSigners: Set[Seed]
+      ): Future[TransactionResponse] = for {
         sequence <- account.detail(seed.accountId).map(_.nextSequence)
-        response <- transact(simpleTransaction(networkId, seed, operations, sequence))
+        response <- transact(simpleTransaction(networkId, seed, operations, sequence, otherSigners))
       } yield response
     }
   }
 
-  private def simpleTransaction(networkId: NetworkId, seed: Seed, operations: List[Operation], sequence: Long) = {
+  private def simpleTransaction(
+    networkId: NetworkId,
+    seed: Seed,
+    operations: List[Operation],
+    sequence: Long,
+    otherSigners: Set[Seed]
+  ) = {
     Transaction(
       networkId = networkId,
       source = seed.accountId,
       sequence = sequence,
       operations = operations,
       maxFee = MinFeePerOperationInStroops * operations.size
-    ).sign(seed)
+    ).sign(seed :: otherSigners.toList: _*)
   }
 }
 
@@ -129,5 +143,5 @@ sealed trait Horizon[F[_]] {
   /**
    * A convenience method for transacting with a single signer.
    */
-  def transact(seed: Seed, operations: List[Operation]): F[TransactionResponse]
+  def transact(seed: Seed, operations: List[Operation], otherSigners: Set[Seed] = Set.empty): F[TransactionResponse]
 }
