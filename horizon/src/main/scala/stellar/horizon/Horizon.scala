@@ -3,7 +3,7 @@ package stellar.horizon
 import okhttp3.{HttpUrl, OkHttpClient}
 import stellar.horizon.io._
 import stellar.protocol.op.Operation
-import stellar.protocol.{Amount, Lumen, NetworkId, Seed, Transaction}
+import stellar.protocol.{NetworkId, Seed, Transaction}
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.{ExecutionContext, Future}

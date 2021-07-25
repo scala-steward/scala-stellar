@@ -44,9 +44,13 @@ case class TrustChangeFailed(
 object TrustChangeFailed {
   sealed trait EnumVal
   case object IssuerDoesNotExist extends EnumVal
+  case object TrustLineDoesNotExist extends EnumVal
 
-  private val failureTypes = Map(
-    ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> IssuerDoesNotExist
+  private val failureTypes: Map[ChangeTrustResultCode, Long => TrustChangeFailed.EnumVal] = Map(
+    ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> { _ => IssuerDoesNotExist },
+    ChangeTrustResultCode.CHANGE_TRUST_INVALID_LIMIT -> { (limit: Long) =>
+      if (limit == 0) TrustLineDoesNotExist else ???
+    }
   )
 
   def decode(
@@ -55,6 +59,6 @@ object TrustChangeFailed {
     failure: ChangeTrustResultCode
   ): TrustChangeEvent = TrustChangeFailed(
     source = Address.decode(source),
-    failure = failureTypes(failure)
+    failure = failureTypes(failure).apply(op.getLimit.getInt64)
   )
 }
