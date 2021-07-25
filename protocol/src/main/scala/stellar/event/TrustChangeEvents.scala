@@ -47,11 +47,13 @@ object TrustChangeFailed {
   case object IssuerDoesNotExist extends EnumVal
   /** Attempted to remove a trustline, but it did not exist, or it does exist, but the balance is not zero */
   case object CannotRemoveTrustLine extends EnumVal
+  /** Attempted to modify a trustline, but the new limit is insufficent to cover existing balances and liabilities */
+  case object InsufficientTrustLineLimit extends EnumVal
 
   private val failureTypes: Map[ChangeTrustResultCode, Long => TrustChangeFailed.EnumVal] = Map(
     ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> { _ => IssuerDoesNotExist },
     ChangeTrustResultCode.CHANGE_TRUST_INVALID_LIMIT -> { (limit: Long) =>
-      if (limit == 0) CannotRemoveTrustLine else ???
+      if (limit == 0) CannotRemoveTrustLine else InsufficientTrustLineLimit
     }
   )
 

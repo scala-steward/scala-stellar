@@ -3,7 +3,7 @@ package stellar.horizon
 import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import stellar.event.TrustChangeFailed.{IssuerDoesNotExist, CannotRemoveTrustLine}
+import stellar.event.TrustChangeFailed.{CannotRemoveTrustLine, InsufficientTrustLineLimit, IssuerDoesNotExist}
 import stellar.event.{TrustChangeFailed, TrustChanged, TrustRemoved}
 import stellar.horizon.ValidationResult.Valid
 import stellar.horizon.testing.TestAccountPool
@@ -87,9 +87,28 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
   }
 
   "changing the trust level for an asset" should {
-    "fail when the new limit is insufficient to cover the existing balance" >> pending("TODO")
+    "fail when the new limit is insufficient to cover the existing balance" >> {
+      val (trustee, trustor) = testAccountPool.borrowPair
+      val asset = Token("KOUGIRA", trustee.accountId)
+      val response = for {
+        _ <- horizon.transact(trustor, List(
+          TrustAsset(asset, 100_000_000L),
+          Pay(trustor.address, Amount(asset, 5_000_000L), Some(trustee.address))
+        ), Set(trustee))
+        r <- horizon.transact(trustor, List(TrustAsset(asset, 2_000_000L)))
+      } yield r
+      println(response.get)
+      response must beSuccessfulTry[TransactionResponse].like { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(TrustChangeFailed(trustor.address, InsufficientTrustLineLimit))
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }
+    }
 
     "fail when the new limit is sufficient to cover balance, but not the balance plus buying liabilities" >> pending("trading")
+
+    "succeed otherwise" >> pending("TODO")
   }
 
   "removing trust of an asset" should {
