@@ -35,7 +35,7 @@ lazy val horizon = project
   .settings(
     libraryDependencies ++= List(
       "com.squareup.okhttp3" % "okhttp" % "4.9.1",
-      "org.json4s" %% "json4s-native" % "4.0.0",
+      "org.json4s" %% "json4s-native" % "4.0.1",
     ),
     scalacOptions ++= List("-deprecation", "-feature"),
     coverage(95),
@@ -44,12 +44,12 @@ lazy val horizon = project
 
 val logging = List(
   "ch.qos.logback" % "logback-classic" % "1.2.4",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
-  "org.slf4j" % "slf4j-simple" % "2.0.0-alpha1" % Test
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
+  "org.slf4j" % "slf4j-simple" % "2.0.0-alpha2" % Test
 )
 val specs2 = List(
-  "org.specs2" %% "specs2-core" % "4.12.0" % "test",
-  "org.specs2" %% "specs2-scalacheck" % "4.12.0" % "test",
+  "org.specs2" %% "specs2-core" % "4.12.3" % "test",
+  "org.specs2" %% "specs2-scalacheck" % "4.12.3" % "test",
 )
 
 def coverage(min: Int) = List(
