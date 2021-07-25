@@ -16,7 +16,7 @@ import scala.concurrent.duration.DurationInt
 class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with LazyLogging {
 
   private val horizon = Horizon.sync(Horizon.Networks.Test)
-  private lazy val testAccountPool = Await.result(TestAccountPool.create(15), 1.minute)
+  private lazy val testAccountPool = Await.result(TestAccountPool.create(20), 1.minute)
 
   "trusting an asset" should {
 
@@ -97,7 +97,6 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         ), Set(trustee))
         r <- horizon.transact(trustor, List(TrustAsset(asset, 2_000_000L)))
       } yield r
-      println(response.get)
       response must beSuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beFalse
         res.operationEvents mustEqual List(TrustChangeFailed(trustor.address, InsufficientTrustLineLimit))
@@ -108,7 +107,24 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
 
     "fail when the new limit is sufficient to cover balance, but not the balance plus buying liabilities" >> pending("trading")
 
-    "succeed otherwise" >> pending("TODO")
+    "succeed otherwise" >> {
+      val (trustee, trustor) = testAccountPool.borrowPair
+      val asset = Token("KOUGIRA", trustee.accountId)
+      val response = for {
+        _ <- horizon.transact(trustor, List(
+          TrustAsset(asset, 100_000_000L),
+          Pay(trustor.address, Amount(asset, 5_000_000L), Some(trustee.address))
+        ), Set(trustee))
+        r <- horizon.transact(trustor, List(TrustAsset(asset, 7_000_000L)))
+      } yield r
+      response must beSuccessfulTry[TransactionResponse].like { res =>
+        res.accepted must beTrue
+        res.operationEvents mustEqual List(TrustChanged(trustor.address, asset, 7_000_000L))
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }
+    }
+
   }
 
   "removing trust of an asset" should {
