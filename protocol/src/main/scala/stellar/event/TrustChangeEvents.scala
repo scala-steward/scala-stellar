@@ -43,13 +43,15 @@ case class TrustChangeFailed(
 
 object TrustChangeFailed {
   sealed trait EnumVal
+  /** Attempted to establish a trustline, but the asset issuing account does not exist */
   case object IssuerDoesNotExist extends EnumVal
-  case object TrustLineDoesNotExist extends EnumVal
+  /** Attempted to remove a trustline, but it did not exist, or it does exist, but the balance is not zero */
+  case object CannotRemoveTrustLine extends EnumVal
 
   private val failureTypes: Map[ChangeTrustResultCode, Long => TrustChangeFailed.EnumVal] = Map(
     ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> { _ => IssuerDoesNotExist },
     ChangeTrustResultCode.CHANGE_TRUST_INVALID_LIMIT -> { (limit: Long) =>
-      if (limit == 0) TrustLineDoesNotExist else ???
+      if (limit == 0) CannotRemoveTrustLine else ???
     }
   )
 

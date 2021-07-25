@@ -3,12 +3,12 @@ package stellar.horizon
 import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import stellar.event.TrustChangeFailed.{IssuerDoesNotExist, TrustLineDoesNotExist}
+import stellar.event.TrustChangeFailed.{IssuerDoesNotExist, CannotRemoveTrustLine}
 import stellar.event.{TrustChangeFailed, TrustChanged, TrustRemoved}
 import stellar.horizon.ValidationResult.Valid
 import stellar.horizon.testing.TestAccountPool
-import stellar.protocol.op.TrustAsset
-import stellar.protocol.{Seed, Token, Transaction}
+import stellar.protocol.op.{Pay, TrustAsset}
+import stellar.protocol.{Amount, Seed, Token, Transaction}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -117,13 +117,38 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
       val response = horizon.transact(trustor, List(TrustAsset.removeTrust(asset)))
       response must beSuccessfulTry[TransactionResponse].like { res =>
         res.accepted must beFalse
-        res.operationEvents mustEqual List(TrustChangeFailed(trustor.address, TrustLineDoesNotExist))
+        res.operationEvents mustEqual List(TrustChangeFailed(trustor.address, CannotRemoveTrustLine))
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
       }
     }
 
-    "fail when a balance remains" >> pending("TODO")
+    // TODO - horizon.transact() variant with extra signatures
+
+    "fail when a balance remains" >> {
+      val (trustee, trustor) = testAccountPool.borrowPair
+      val asset = Token("KOUGIRA", trustee.accountId)
+      val response = for {
+        fromAccountDetails <- horizon.account.detail(trustor.accountId)
+        _ <- horizon.transact(Transaction(
+          networkId = horizon.networkId,
+          source = trustor.accountId,
+          sequence = fromAccountDetails.nextSequence,
+          operations = List(
+            TrustAsset(asset, 100_000_000L),
+            Pay(trustor.address, Amount(asset, 5_000_000L), Some(trustee.address))
+          ),
+          maxFee = 200
+        ).sign(trustor, trustee))
+        r <- horizon.transact(trustor, List(TrustAsset.removeTrust(asset)))
+      } yield r
+      response must beSuccessfulTry[TransactionResponse].like { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(TrustChangeFailed(trustor.address, CannotRemoveTrustLine))
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }
+    }
   }
 
   // Close the accounts and return their funds back to friendbot
