@@ -34,7 +34,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 10.seconds)
+      }.await(0, 30.seconds)
     }
 
     "fail when the sender does not exist" >> {
@@ -56,7 +56,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         res.operationEvents must beEmpty[List[OperationEvent]]
         res.feeCharged mustEqual 0L
         res.validationResult mustEqual SourceAccountDoesNotExist
-      }.await(0, 10.seconds)
+      }.await(0, 30.seconds)
     }
 
     "fail when the recipient does not exist" >> {
@@ -74,7 +74,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 10.seconds)
+      }.await(0, 30.seconds)
     }
 
     "fail when the token funds are insufficient" >> {
@@ -229,7 +229,7 @@ class PaymentJourneySpec(implicit ee: ExecutionEnv) extends Specification with L
         )
         res.feeCharged mustEqual 100L
         res.validationResult mustEqual Valid
-      }.await(0, 10.seconds)
+      }.await(0, 30.seconds)
     }
   }
 

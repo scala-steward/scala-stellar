@@ -12,16 +12,18 @@ import scala.util.Try
 
 object TransactionOperations {
 
-  def postTransactionRequest(horizonBaseUrl: HttpUrl, transaction: Transaction): Request =
+  def postTransactionRequest(horizonBaseUrl: HttpUrl, transaction: Transaction): Request = {
+    val tx = transaction.encodeSigned.base64()
     new Request.Builder()
       .url(horizonBaseUrl.newBuilder()
         .addPathSegment("transactions")
         .build)
       .post(new MultipartBody.Builder()
         .setType(MultipartBody.FORM)
-        .addFormDataPart("tx", transaction.encodeSigned.base64())
+        .addFormDataPart("tx", tx)
         .build)
       .build
+  }
 
   def responseToTransactionResponse(response: Response): TransactionResponse = {
     implicit val formats: Formats = DefaultFormats + TransactionResponseReader

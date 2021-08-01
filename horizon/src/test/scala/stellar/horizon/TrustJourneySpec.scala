@@ -15,9 +15,6 @@ import scala.concurrent.duration.DurationInt
 
 class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with LazyLogging {
 
-  // TODO - check the failure scenarios on https://developers.stellar.org/docs/start/list-of-operations/#change-trust
-  //   and complete the test cases where possible.
-
   private val horizon = Horizon.sync(Horizon.Networks.Test)
   private lazy val testAccountPool = Await.result(TestAccountPool.create(20), 1.minute)
 
@@ -72,7 +69,7 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         ).sign(account))
       } yield response
 
-      response.failed.foreach(_.printStackTrace())
+      // response.failed.foreach(_.printStackTrace())
       response must beAFailedTry[TransactionResponse]
 
       // TODO - this isn't working. Should be CannotTrustSelf, but horizon is returning an malformed error.

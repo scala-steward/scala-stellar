@@ -66,14 +66,26 @@ class TestAccountPool(
         seed -> operations
       }.toMap
 
-      val transactions = (usedCleanUpOperations ++ freeCleanUpOperations).map { case (seed, futureOps) =>
-        for {
-          ops <- futureOps
-          resp <- horizon.transact(seed, ops)
-        } yield resp
-      }.toList
+      val allOperations: Future[List[(Seed, Operation)]] = Future.sequence(
+        (usedCleanUpOperations ++ freeCleanUpOperations).toList
+          .map { case (seed, ops) => ops.map { seed -> _ }}
+      ).map { _.flatMap { case (seed, ops) => ops.map { seed -> _ }}}
 
-      Future.sequence(transactions)
+      val batchedOperations: Future[List[List[(Seed, Operation)]]] =
+        allOperations.map { _.foldLeft(List.empty[List[(Seed, Operation)]]) { case (acc, next) =>
+          acc match {
+            case Nil => List(List(next))
+            case h +: _ if h.size == 100 => List(next) :: acc
+            case h +: _ if h.distinctBy(_._1).size == 20 && !h.exists(_._1 == next._1) => List(next) :: acc
+            case h +: t => next +: h :: t
+          }
+      }.reverse.map(_.reverse)}
+
+      batchedOperations.flatMap(xss => Future.sequence(xss.map { xs =>
+        val seeds = xs.map(_._1).distinct
+        val ops = xs.map(_._2)
+        horizon.transact(seeds.head, ops, seeds.tail.toSet)
+      }))
     }
   }
 
