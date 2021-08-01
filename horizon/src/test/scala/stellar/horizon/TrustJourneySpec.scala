@@ -3,7 +3,7 @@ package stellar.horizon
 import com.typesafe.scalalogging.LazyLogging
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
-import stellar.event.TrustChangeFailed.{CannotRemoveTrustLine, InsufficientTrustLineLimit, IssuerDoesNotExist}
+import stellar.event.TrustChangeFailed.{CannotRemoveTrustLine, CannotTrustSelf, InsufficientTrustLineLimit, IssuerDoesNotExist, SdkInternalError}
 import stellar.event.{TrustChangeFailed, TrustChanged, TrustRemoved}
 import stellar.horizon.ValidationResult.Valid
 import stellar.horizon.testing.TestAccountPool
@@ -14,6 +14,9 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with LazyLogging {
+
+  // TODO - check the failure scenarios on https://developers.stellar.org/docs/start/list-of-operations/#change-trust
+  //   and complete the test cases where possible.
 
   private val horizon = Horizon.sync(Horizon.Networks.Test)
   private lazy val testAccountPool = Await.result(TestAccountPool.create(20), 1.minute)
@@ -54,6 +57,35 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
       pending("trading")
 
     "fail when the asset code is not alphanumeric" >> pending("こうぎら")
+
+    "fail when attempting to trust yourself" >> {
+      val account = testAccountPool.borrow
+      val asset = Token("BTC", account.accountId)
+      val response = for {
+        fromAccountDetails <- horizon.account.detail(account.accountId)
+        response <- horizon.transact(Transaction(
+          networkId = horizon.networkId,
+          source = account.accountId,
+          sequence = fromAccountDetails.nextSequence,
+          operations = List(
+            TrustAsset(asset, 100_000_000L)
+          ),
+          maxFee = 100
+        ).sign(account))
+      } yield response
+
+      response must beASuccessfulTry[TransactionResponse].like { res =>
+        res.accepted must beFalse
+        res.operationEvents mustEqual List(
+          TrustChangeFailed(
+            source = account.address,
+            failure = SdkInternalError // TODO - should be "CannotTrustSelf"
+          )
+        )
+        res.feeCharged mustEqual 100L
+        res.validationResult mustEqual Valid
+      }
+    }
 
     "otherwise succeed" >> {
       val (trustee, trustor) = testAccountPool.borrowPair
@@ -124,7 +156,6 @@ class TrustJourneySpec(implicit ee: ExecutionEnv) extends Specification with Laz
         res.validationResult mustEqual Valid
       }
     }
-
   }
 
   "removing trust of an asset" should {

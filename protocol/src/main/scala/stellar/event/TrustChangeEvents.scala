@@ -1,4 +1,5 @@
 package stellar.event
+import org.stellar.xdr
 import org.stellar.xdr.{ChangeTrustOp, ChangeTrustResultCode, MuxedAccount}
 import stellar.protocol.{Address, Token}
 
@@ -47,14 +48,20 @@ object TrustChangeFailed {
   case object IssuerDoesNotExist extends EnumVal
   /** Attempted to remove a trustline, but it did not exist, or it does exist, but the balance is not zero */
   case object CannotRemoveTrustLine extends EnumVal
-  /** Attempted to modify a trustline, but the new limit is insufficent to cover existing balances and liabilities */
+  /** Attempted to modify a trustline, but the new limit is insufficient to cover existing balances and liabilities */
   case object InsufficientTrustLineLimit extends EnumVal
+  /** Attempted to establish a trustline from one account to itself */
+  case object CannotTrustSelf extends EnumVal
+  /** It's not you, it's me. Please file a bug report. */
+  case object SdkInternalError extends EnumVal
 
   private val failureTypes: Map[ChangeTrustResultCode, Long => TrustChangeFailed.EnumVal] = Map(
     ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> { _ => IssuerDoesNotExist },
     ChangeTrustResultCode.CHANGE_TRUST_INVALID_LIMIT -> { (limit: Long) =>
       if (limit == 0) CannotRemoveTrustLine else InsufficientTrustLineLimit
-    }
+    },
+    ChangeTrustResultCode.CHANGE_TRUST_MALFORMED -> { _ => SdkInternalError },
+    ChangeTrustResultCode.CHANGE_TRUST_SELF_NOT_ALLOWED -> { _ => CannotTrustSelf },
   )
 
   def decode(
