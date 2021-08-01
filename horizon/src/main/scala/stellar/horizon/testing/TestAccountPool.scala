@@ -75,9 +75,9 @@ class TestAccountPool(
         allOperations.map { _.foldLeft(List.empty[List[(Seed, Operation)]]) { case (acc, next) =>
           acc match {
             case Nil => List(List(next))
-            case h +: _ if h.size == 100 => List(next) :: acc
-            case h +: _ if h.distinctBy(_._1).size == 20 && !h.exists(_._1 == next._1) => List(next) :: acc
-            case h +: t => next +: h :: t
+            case h :: _ if h.size == 100 => List(next) :: acc
+            case h :: _ if h.distinctBy(_._1).size == 20 && !h.exists(_._1 == next._1) => List(next) :: acc
+            case h :: t => next +: h :: t
           }
       }.reverse.map(_.reverse)}
 
