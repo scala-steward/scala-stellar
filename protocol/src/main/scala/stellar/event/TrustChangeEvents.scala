@@ -52,15 +52,12 @@ object TrustChangeFailed {
   case object InsufficientTrustLineLimit extends EnumVal
   /** Attempted to establish a trustline from one account to itself */
   case object CannotTrustSelf extends EnumVal
-  /** It's not you, it's me. Please file a bug report. */
-  case object SdkInternalError extends EnumVal
 
   private val failureTypes: Map[ChangeTrustResultCode, Long => TrustChangeFailed.EnumVal] = Map(
     ChangeTrustResultCode.CHANGE_TRUST_NO_ISSUER -> { _ => IssuerDoesNotExist },
     ChangeTrustResultCode.CHANGE_TRUST_INVALID_LIMIT -> { (limit: Long) =>
       if (limit == 0) CannotRemoveTrustLine else InsufficientTrustLineLimit
     },
-    ChangeTrustResultCode.CHANGE_TRUST_MALFORMED -> { _ => SdkInternalError },
     ChangeTrustResultCode.CHANGE_TRUST_SELF_NOT_ALLOWED -> { _ => CannotTrustSelf },
   )
 

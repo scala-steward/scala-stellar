@@ -51,11 +51,12 @@ case object Lumen extends Asset {
  * An account-defined custom asset.
  */
 case class Token(code: String, issuer: AccountId) extends Asset {
+  require(code.matches("^[a-zA-Z0-9]{1,12}$"), "Must be alphanumeric between 1 and 12 characters inclusive")
+
   override val asToken: Option[Token] = Some(this)
   private val codeBytes = new ByteString(code.getBytes(StandardCharsets.UTF_8))
   private val size = codeBytes.size()
   private val isCompact = size <= 4
-  require(size >= 1 && size <= 12)
 
   def fullCode: String = s"$code:${issuer.encodeToString}"
 
