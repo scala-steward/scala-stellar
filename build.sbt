@@ -20,7 +20,7 @@ lazy val protocol = project
       "commons-codec" % "commons-codec" % "1.15",
       "org.typelevel" %% "cats-core" % "2.6.1",
       "net.i2p.crypto" % "eddsa" % "0.3.0",
-      "com.squareup.okio" % "okio" % "2.10.0",
+      "com.squareup.okio" % "okio" % "3.0.0",
     ) ::: logging ::: specs2,
     scalacOptions ++= List("-deprecation", "-feature"),
     coverage(95)
